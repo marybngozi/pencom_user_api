@@ -102,7 +102,7 @@ const makeAdminStaff = async (req, res, next) => {
 
 const companyValidate = async (req, res, next) => {
   try {
-    // TODO:Get the token parameters
+    // TODO:Get the token parameters //on validation get real data
     let { userType, agentId, companyName, email, phone } = req.user;
 
     // declaring all variables
@@ -132,7 +132,8 @@ const companyValidate = async (req, res, next) => {
         companyCode,
       });
 
-      let { email, phone, token } = updatedToken;
+      // TODO: fix this = add email and phone
+      let { token } = updatedToken;
       const responseMessage = await validationNotification(
         token,
         email,
