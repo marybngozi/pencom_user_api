@@ -129,6 +129,7 @@ const verifyAccount = async (req, res, next) => {
   try {
     // get and update the token details
     const existToken = await Verify.verifyValidToken(req.body.token);
+    console.log({ existToken });
 
     // if no verfication token was found
     if (!existToken) throw new NotFoundError("Invalid verification link!");
