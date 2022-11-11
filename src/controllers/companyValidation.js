@@ -1,6 +1,7 @@
 const moment = require("moment");
 const User = require("../data/user");
 const CompanyValidation = require("../data/companyValidation");
+const Wallet = require("../data/wallet");
 const MakeEmailTemplate = require("../utils/makeEmailTemplate");
 const { sendMail, sendSms } = require("../utils/notification");
 const { hideEmail, hidePhone } = require("../utils/helpers");
@@ -217,6 +218,8 @@ const companyVerify = async (req, res, next) => {
       agentId,
       doneStatus: 1,
     });
+
+    await Wallet.createWallet({ companyCode, agentId });
 
     return res.status(200).json({
       message: "Account verification was successfully!",

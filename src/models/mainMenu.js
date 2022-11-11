@@ -10,7 +10,6 @@ const documentSchema = new Schema(
     },
     icon: {
       type: String,
-      unique: true,
       required: false,
     },
     createdAt: {

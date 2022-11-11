@@ -3,15 +3,15 @@ const UploadSchedule = require("../data/uploadSchedule");
 const Item = require("../data/item");
 const { NotFoundError } = require("../utils/errors");
 
-const countItemMonth = async (req, res) => {
+const countItemMonth = async (req, res, next) => {
   try {
     // Get the token parameters
     let { userType, companyCode, rsaPin } = req.user;
 
     // Get Records for the Month
-    const date = new Date();
-    const startDate = new Date(date.getFullYear(), date.getMonth(), 1);
-    const endDate = new Date(date.getFullYear(), date.getMonth() + 1, 0);
+    // const date = new Date();
+    // const startDate = new Date(date.getFullYear(), date.getMonth(), 1);
+    // const endDate = new Date(date.getFullYear(), date.getMonth() + 1, 0);
 
     let stat = {};
 
@@ -26,11 +26,7 @@ const countItemMonth = async (req, res) => {
       findObj["paid"] = 1;
     }
 
-    let sums = await UploadSchedule.aggregateAndCount(
-      startDate,
-      endDate,
-      findObj
-    );
+    let sums = await UploadSchedule.aggregateAndCount("month", findObj);
 
     if (sums.length > 0) {
       stat = sums[0];
@@ -61,14 +57,14 @@ const countItemMonth = async (req, res) => {
   }
 };
 
-const countItemYear = async (req, res) => {
+const countItemYear = async (req, res, next) => {
   try {
     // Get the token parameters
     let { userType, rsaPin, companyCode } = req.user;
 
     // Get Records for the year
-    const startDate = new Date(new Date().getFullYear(), 0, 1);
-    const endDate = new Date();
+    // const startDate = new Date(new Date().getFullYear(), 0, 1);
+    // const endDate = new Date();
 
     let stat = {};
 
@@ -83,11 +79,7 @@ const countItemYear = async (req, res) => {
       findObj["paid"] = 1;
     }
 
-    let sums = await UploadSchedule.aggregateAndCount(
-      startDate,
-      endDate,
-      findObj
-    );
+    let sums = await UploadSchedule.aggregateAndCount("year", findObj);
 
     if (sums.length > 0) {
       stat = sums[0];
@@ -160,14 +152,14 @@ const getStates = async (req, res, next) => {
   }
 };
 
-const sumYearMonths = async (req, res) => {
+const sumYearMonths = async (req, res, next) => {
   try {
     // Get the token parameters
     let { userType, rsaPin, companyCode } = req.user;
 
     // Get Records for the year
-    const startDate = new Date(new Date().getFullYear(), 0, 1);
-    const endDate = new Date();
+    // const startDate = new Date(new Date().getFullYear(), 0, 1);
+    // const endDate = new Date();
 
     const findObj = {};
 
@@ -180,11 +172,7 @@ const sumYearMonths = async (req, res) => {
       findObj["paid"] = 1;
     }
 
-    let sums = await UploadSchedule.aggregateSumGroup(
-      startDate,
-      endDate,
-      findObj
-    );
+    let sums = await UploadSchedule.aggregateSumGroup(findObj);
 
     return res.status(200).json({
       message: "Year months stat fetched successfully",

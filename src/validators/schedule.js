@@ -136,6 +136,25 @@ const listProcessedScheduleItem = async (req, res, next) => {
     });
   }
 };
+const getContributionSchema = Joi.object({
+  dateStart: Joi.any(),
+  dateEnd: Joi.any(),
+});
+
+const getContribution = async (req, res, next) => {
+  try {
+    await getContributionSchema.validateAsync(req.body, {
+      abortEarly: true,
+    });
+    next();
+  } catch (err) {
+    console.log("getContributionValidator", err.message);
+    return res.status(400).json({
+      message: err.message,
+      errorCode: "V400",
+    });
+  }
+};
 
 module.exports = {
   deleteSchedule,
@@ -145,4 +164,5 @@ module.exports = {
   uploadSchedule,
   listProcessedSchedule,
   listProcessedScheduleItem,
+  getContribution,
 };

@@ -101,9 +101,24 @@ module.exports = () => {
     validator.listProcessedScheduleItem,
     scheduleController.getMandate
   );
+  // get contributions
+  api.post(
+    "/get-contribution",
+    authenticate,
+    validator.getContribution,
+    scheduleController.getContribution
+  );
   // get payment details
   api.get(
     "/payment/:invoiceNo",
+    authenticate,
+    validator.listProcessedScheduleItem,
+    scheduleController.getPaymentDetails
+  );
+  // get payment details
+  api.get(
+    "/payment/:invoiceNo",
+    authenticate,
     validator.listProcessedScheduleItem,
     scheduleController.getPaymentDetails
   );

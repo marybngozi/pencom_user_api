@@ -6,13 +6,20 @@ const addSchedules = async (schedules) => {
   return await UploadSchedule.create(schedules);
 };
 
-const aggregateAndCount = async (startDate, endDate, data) => {
+const aggregateAndCount = async (duration, data) => {
+  const date = new Date();
+  if (duration == "month") {
+    data["month"] = date.getMonth() + 1;
+  }
+  if (duration == "year") {
+    data["year"] = date.getFullYear();
+  }
   const sums = await UploadSchedule.aggregate([
     {
       $match: {
         ...data,
         deleted: false,
-        createdAt: { $gte: startDate, $lt: endDate },
+        paid: 1,
       },
     },
     {
@@ -35,13 +42,16 @@ const aggregateAndCount = async (startDate, endDate, data) => {
   return sums;
 };
 
-const aggregateSumGroup = async (startDate, endDate, data) => {
+const aggregateSumGroup = async (data) => {
+  const date = new Date();
   const sums = await UploadSchedule.aggregate([
     {
       $match: {
         ...data,
+        paid: 1,
         deleted: false,
-        createdAt: { $gte: startDate, $lt: endDate },
+        month: date.getMonth() + 1,
+        year: date.getFullYear(),
       },
     },
     {
@@ -140,18 +150,25 @@ const checkBatchName = async (batchId, agentId, itemCode) => {
   return false;
 };
 
-const processSumCount = async ({ companyCode, itemCode, month, year }) => {
+const processSumCount = async ({
+  companyCode,
+  itemCode,
+  month,
+  year,
+  processedStatus,
+}) => {
   const reqObj = {
     paid: 0,
     deleted: false,
-    processedStatus: 0,
     month: Number(month),
-    year: year,
+    year: Number(year),
     itemCode: itemCode,
     companyCode,
   };
 
-  console.log(reqObj);
+  if (processedStatus) {
+    reqObj["processedStatus"] = 1;
+  }
 
   const upload = await UploadSchedule.find(
     {
@@ -266,6 +283,45 @@ const deleteTask = async (id) => {
   );
 };
 
+const getTransactions = async (rsaPin) => {
+  return UploadSchedule.aggregate([
+    {
+      $match: {
+        rsaPin,
+        deleted: false,
+        paid: 1,
+      },
+    },
+    {
+      $lookup: {
+        from: "users", // collection name in db
+        localField: "companyCode",
+        foreignField: "companyCode",
+        as: "company",
+      },
+    },
+    {
+      $lookup: {
+        from: "items", // collection name in db
+        localField: "itemCode",
+        foreignField: "itemCode",
+        as: "item",
+      },
+    },
+    {
+      $project: {
+        company: { companyName: 1 },
+        item: { itemName: 1 },
+        amount: 1,
+        month: 1,
+        year: 1,
+        paid: 1,
+        createdAt: 1,
+      },
+    },
+  ]);
+};
+
 module.exports = {
   addSchedules,
   aggregateAndCount,
@@ -283,4 +339,5 @@ module.exports = {
   updateTask,
   getTasks,
   deleteTask,
+  getTransactions,
 };

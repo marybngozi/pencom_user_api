@@ -351,7 +351,6 @@ const processSchedule = async (req, res, next) => {
   try {
     // Get the token parameters
     let { agentId, companyName, companyCode, email } = req.user;
-    let { itemCode, month, year } = req.body;
 
     // declaring all variables
     let { payDetails, payData } = req.body;
@@ -508,19 +507,58 @@ const getMandate = async (req, res, next) => {
     // Get the body parameters
     let { invoiceNo } = req.body;
     // get the processed remittance using the custReference
-    const upload = await ProcessedSchedule.getProcessedSchedule(invoiceNo);
+    const processedUpload = await ProcessedSchedule.getProcessedSchedule(
+      invoiceNo
+    );
 
-    if (!upload) throw new BadRequestError("Mandate not found");
+    if (!processedUpload) throw new BadRequestError("Mandate not found");
+
+    let theCountsMain = {};
+
+    // get all pfas and their pfc details
+    const pfas = await User.getAllPfas("include");
+    if (!pfas.length) throw new NotFoundError("PFAs not found");
+
+    let findObj = {
+      month: processedUpload.month,
+      year: processedUpload.year,
+      itemCode: processedUpload.itemCode,
+      companyCode: processedUpload.companyCode,
+    };
+
+    // Get the total for all pfas for the given month and year
+    let { sumed } = await UploadSchedule.processSumCount(findObj);
+    console.log(sumed);
+
+    if (sumed.length) {
+      for (let i = 0; i < sumed.length; i++) {
+        const val = sumed[i];
+        const valPfa = pfas.find((pfa) => val._id == pfa.pfaCode);
+        sumed[i] = {
+          ...sumed[i],
+          pfaName: valPfa.pfaName,
+          pfcId: valPfa.pfc.id,
+        };
+
+        if (!theCountsMain[valPfa.pfc.pfcName]) {
+          theCountsMain[valPfa.pfc.pfcName] = [];
+        }
+
+        theCountsMain[valPfa.pfc.pfcName].push(sumed[i]);
+      }
+    }
 
     // get company data
-    const company = await User.getUser({ companyCode: upload.companyCode });
+    const company = await User.getUser({
+      companyCode: processedUpload.companyCode,
+    });
 
     // get the item details
-    const item = await Item.findItem(upload.itemCode);
+    const item = await Item.findItem(processedUpload.itemCode);
     if (!item) throw new BadRequestError("No Item found");
 
     const data = {
-      item: upload,
+      item: processedUpload,
       itemName: item.itemName,
       companyName: company.companyName,
       companyCode: company.companyCode,
@@ -529,6 +567,7 @@ const getMandate = async (req, res, next) => {
     return res.status(200).json({
       message: "Mandate details fetched successfully",
       data: data,
+      items: theCountsMain,
       meta: {
         currentPage: 1,
         pageSize: 1,
@@ -592,6 +631,29 @@ const getPaymentDetails = async (req, res, next) => {
   }
 };
 
+const getContribution = async (req, res, next) => {
+  try {
+    // Get the body parameters
+    let { rsaPin } = req.user;
+    // get the processed remittance using the custReference
+    const transactions = await UploadSchedule.getTransactions(rsaPin);
+    console.log({ transactions });
+
+    return res.status(200).json({
+      message: "Mandate details fetched successfully",
+      data: transactions,
+      meta: {
+        currentPage: 1,
+        pageSize: 1,
+        pageTotal: 1,
+      },
+    });
+  } catch (e) {
+    console.log("scheduleController-getMandate", e);
+    next(e);
+  }
+};
+
 module.exports = {
   listSchedule,
   deleteSchedule,
@@ -607,4 +669,5 @@ module.exports = {
   getPaymentDetails,
   removeTask,
   getBatchSchedule,
+  getContribution,
 };

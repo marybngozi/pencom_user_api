@@ -76,7 +76,11 @@ const getNotPaidProcessedSchedule = async ({ itemCode, agentId }) => {
   }).sort({ amount: "asc" });
 };
 
-const getProcessedSchedule = async (invoiceNo, paymentStatus, itemCode) => {
+const getProcessedSchedule = async (
+  invoiceNo,
+  paymentStatus = null,
+  itemCode = null
+) => {
   const findObj = { deleted: false, invoiceNo };
   if (paymentStatus || paymentStatus === 0) {
     findObj["paymentStatus"] = paymentStatus;

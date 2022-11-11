@@ -26,6 +26,10 @@ const generateWalletCode = async () => {
 };
 
 const createWallet = async ({ companyCode, agentId }) => {
+  const prevWallet = await getWallet(companyCode);
+
+  if (prevWallet) return null;
+
   let walletCode = await generateWalletCode();
 
   const wallet = await Wallet.create({

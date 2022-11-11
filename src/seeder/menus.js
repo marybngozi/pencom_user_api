@@ -9,6 +9,16 @@ const MainMenus = [
     name: "Schedule",
     icon: "fa fa-suitcase",
   },
+  {
+    _id: "636e66ae8c142e6cc9c6b290",
+    name: "Profile",
+    icon: "fa fa-user",
+  },
+  {
+    _id: "636e66ae8c142e6cc9c6b291",
+    name: "Transactions",
+    icon: "fa fa-user",
+  },
 ];
 
 const SubMenus = [
@@ -51,6 +61,18 @@ const SubMenus = [
     name: "List Admin Staff",
     path: "/list-staff",
     menuId: "636b54c977cd215910d2dc66",
+  },
+  {
+    name: "Profile",
+    path: "/view-profile",
+    menuId: "636b54c977cd215910d2dc66",
+    menuType: "staff",
+  },
+  {
+    name: "List Transaction",
+    path: "/list-transaction",
+    menuId: "636e66ae8c142e6cc9c6b291",
+    menuType: "staff",
   },
 ];
 

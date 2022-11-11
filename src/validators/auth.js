@@ -39,7 +39,7 @@ const registerCompany = async (req, res, next) => {
 const registerStaffSchema = Joi.object({
   firstName: Joi.string().required(),
   lastName: Joi.string().required(),
-  otherName: Joi.string(),
+  otherName: Joi.any(),
   email: Joi.string().email().required(),
   verifyUrl: Joi.string().uri().required(),
   phone: Joi.string().min(3).max(15),
