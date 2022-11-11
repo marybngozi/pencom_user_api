@@ -50,7 +50,6 @@ const aggregateSumGroup = async (data) => {
         ...data,
         paid: 1,
         deleted: false,
-        month: date.getMonth() + 1,
         year: date.getFullYear(),
       },
     },
