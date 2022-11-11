@@ -1,0 +1,762 @@
+<!DOCTYPE html>
+<html
+  lang="en"
+  style="
+    box-sizing: border-box;
+    font-family: sans-serif;
+    line-height: 1.15;
+    -webkit-text-size-adjust: 100%;
+    -webkit-tap-highlight-color: transparent;
+  "
+>
+  <head style="box-sizing: border-box">
+    <meta charset="UTF-8" style="box-sizing: border-box" />
+    <meta
+      http-equiv="X-UA-Compatible"
+      content="IE=edge"
+      style="box-sizing: border-box"
+    />
+    <meta
+      name="viewport"
+      content="width=device-width, initial-scale=1.0"
+      style="box-sizing: border-box"
+    />
+
+    <title style="box-sizing: border-box">Pencom Mandate</title>
+  </head>
+  <body
+    style="
+      box-sizing: border-box;
+      margin: 0;
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto,
+        'Helvetica Neue', Arial, 'Noto Sans', sans-serif, 'Apple Color Emoji',
+        'Segoe UI Emoji', 'Segoe UI Symbol', 'Noto Color Emoji';
+      font-size: 1rem;
+      font-weight: 400;
+      line-height: 1.5;
+      color: #212529;
+      text-align: left;
+      background-color: #fff;
+      min-width: 992px !important;
+    "
+  >
+    <div
+      class="col-md-10 col-sm-12 mx-auto mt-3"
+      style="
+        box-sizing: border-box;
+        font-family: Poppins;
+        font-size: 14px;
+        font-weight: 500;
+        color: #6c757d;
+        overflow: visible;
+        position: relative;
+        width: 100%;
+        padding-right: 15px;
+        padding-left: 15px;
+        -ms-flex: 0 0 83.333333%;
+        flex: 0 0 83.333333%;
+        max-width: 83.333333%;
+        margin-top: 1rem !important;
+        margin-right: auto !important;
+        margin-left: auto !important;
+      "
+    >
+      <!-- Start Content-->
+      <div
+        class="container-fluid"
+        style="
+          box-sizing: border-box;
+          font-family: Poppins;
+          font-size: 14px;
+          font-weight: 500;
+          color: #6c757d;
+          overflow: visible;
+          width: 100%;
+          padding-right: 15px;
+          padding-left: 15px;
+          margin-right: auto;
+          margin-left: auto;
+        "
+      >
+        <div
+          class="row"
+          id="scheduleReciept"
+          style="
+            box-sizing: border-box;
+            font-family: Poppins;
+            font-size: 14px;
+            font-weight: 500;
+            color: #6c757d;
+            overflow: visible;
+            display: flex;
+            -ms-flex-wrap: wrap;
+            flex-wrap: wrap;
+            margin-right: -15px;
+            margin-left: -15px;
+          "
+        >
+          <div
+            class="card-body p-0"
+            style="
+              box-sizing: border-box;
+              font-family: Poppins;
+              font-size: 14px;
+              font-weight: 500;
+              color: #6c757d;
+              overflow: visible;
+              -ms-flex: 1 1 auto;
+              flex: 1 1 auto;
+              min-height: 1px;
+              padding: 0 !important;
+            "
+          >
+            <div
+              class="row d-flex justify-content-between p-3 px-1"
+              style="
+                box-sizing: border-box;
+                font-family: Poppins;
+                font-size: 14px;
+                font-weight: 500;
+                color: #6c757d;
+                overflow: visible;
+                display: flex !important;
+                -ms-flex-wrap: wrap;
+                flex-wrap: wrap;
+                margin-right: -15px;
+                margin-left: -15px;
+                -ms-flex-pack: justify !important;
+                justify-content: space-between !important;
+                padding-right: 0.25rem !important;
+                padding-left: 0.25rem !important;
+                padding: 1rem !important;
+              "
+            >
+              <div
+                class="col-md-4 text-center"
+                style="
+                  box-sizing: border-box;
+                  font-family: Poppins;
+                  font-size: 14px;
+                  font-weight: 500;
+                  color: #6c757d;
+                  overflow: visible;
+                  position: relative;
+                  width: 100%;
+                  padding-right: 15px;
+                  padding-left: 15px;
+                  -ms-flex: 0 0 33.333333%;
+                  flex: 0 0 33.333333%;
+                  max-width: 33.333333%;
+                  text-align: center !important;
+                "
+              >
+                <h1
+                  class="font-weight-bold"
+                  style="
+                    box-sizing: border-box;
+                    margin-top: 0;
+                    margin-bottom: 0.5rem;
+                    font-weight: 700 !important;
+                    line-height: 1.2;
+                    font-size: 2.5rem;
+                  "
+                >
+                  Pencom MANDATE
+                </h1>
+              </div>
+              <div
+                class="col-md-3 text-right"
+                style="
+                  box-sizing: border-box;
+                  font-family: Poppins;
+                  font-size: 14px;
+                  font-weight: 500;
+                  color: #6c757d;
+                  overflow: visible;
+                  position: relative;
+                  width: 100%;
+                  padding-right: 15px;
+                  padding-left: 15px;
+                  -ms-flex: 0 0 25%;
+                  flex: 0 0 25%;
+                  max-width: 25%;
+                  text-align: right !important;
+                "
+              >
+                Date: {{ todayDate }}
+              </div>
+            </div>
+
+            <hr
+              class="my-3"
+              style="
+                box-sizing: content-box;
+                height: 0;
+                overflow: visible;
+                margin-top: 1rem !important;
+                margin-bottom: 1rem !important;
+                border: 0;
+                border-top: 1px solid rgba(0, 0, 0, 0.1);
+              "
+            />
+
+            <div
+              class="row pb-3 p-3 px-5"
+              style="
+                box-sizing: border-box;
+                font-family: Poppins;
+                font-size: 14px;
+                font-weight: 500;
+                color: #6c757d;
+                overflow: visible;
+                display: flex;
+                -ms-flex-wrap: wrap;
+                flex-wrap: wrap;
+                margin-right: -15px;
+                margin-left: -15px;
+                padding: 1rem !important;
+                padding-bottom: 1rem !important;
+                padding-right: 3rem !important;
+                padding-left: 3rem !important;
+              "
+            >
+              <div
+                class="col-md-6 col-xs-12"
+                style="
+                  box-sizing: border-box;
+                  font-family: Poppins;
+                  font-size: 14px;
+                  font-weight: 500;
+                  color: #6c757d;
+                  overflow: visible;
+                  position: relative;
+                  width: 100%;
+                  padding-right: 15px;
+                  padding-left: 15px;
+                  -ms-flex: 0 0 50%;
+                  flex: 0 0 50%;
+                  max-width: 50%;
+                "
+              >
+                <h5
+                  class="font-weight-bold mb-4"
+                  style="
+                    box-sizing: border-box;
+                    margin-top: 0;
+                    margin-bottom: 1.5rem !important;
+                    font-weight: 700 !important;
+                    line-height: 1.2;
+                    font-size: 1.25rem;
+                  "
+                >
+                  Beneficiary Information
+                </h5>
+                <p
+                  class="mb-1"
+                  style="
+                    box-sizing: border-box;
+                    margin-top: 0;
+                    margin-bottom: 0.25rem !important;
+                    orphans: 3;
+                    widows: 3;
+                  "
+                >
+                  Name:
+                  <b style="box-sizing: border-box; font-weight: bolder"
+                    >{{ userNames }}</b
+                  >
+                </p>
+                <p
+                  style="
+                    box-sizing: border-box;
+                    margin-top: 0;
+                    margin-bottom: 1rem;
+                    orphans: 3;
+                    widows: 3;
+                  "
+                >
+                  Company Code:
+                  <b style="box-sizing: border-box; font-weight: bolder"
+                    >{{ stateValidationID }}</b
+                  >
+                </p>
+              </div>
+
+              <div
+                class="col-md-6 col-xs-12 text-right"
+                style="
+                  box-sizing: border-box;
+                  font-family: Poppins;
+                  font-size: 14px;
+                  font-weight: 500;
+                  color: #6c757d;
+                  overflow: visible;
+                  position: relative;
+                  width: 100%;
+                  padding-right: 15px;
+                  padding-left: 15px;
+                  -ms-flex: 0 0 50%;
+                  flex: 0 0 50%;
+                  max-width: 50%;
+                  text-align: right !important;
+                "
+              >
+                <h4
+                  class="font-weight-bold mb-4"
+                  style="
+                    box-sizing: border-box;
+                    margin-top: 0;
+                    margin-bottom: 1.5rem !important;
+                    font-weight: 700 !important;
+                    line-height: 1.2;
+                    font-size: 1.5rem;
+                  "
+                >
+                  Payment Information
+                </h4>
+                <h5
+                  style="
+                    box-sizing: border-box;
+                    margin-top: 0;
+                    margin-bottom: 0.5rem;
+                    font-weight: 500;
+                    line-height: 1.2;
+                    font-size: 1.25rem;
+                  "
+                >
+                  Item:
+                  <b style="box-sizing: border-box; font-weight: bolder"
+                    >{{ itemName }}</b
+                  >
+                </h5>
+                <p
+                  class="mb-1 text-uppercase"
+                  style="
+                    box-sizing: border-box;
+                    margin-top: 0;
+                    margin-bottom: 0.25rem !important;
+                    orphans: 3;
+                    widows: 3;
+                    text-transform: uppercase !important;
+                  "
+                >
+                  Invoice No:
+                  <b
+                    class="h5 font-weight-bolder"
+                    style="
+                      box-sizing: border-box;
+                      font-weight: bolder !important;
+                      margin-bottom: 0.5rem;
+                      line-height: 1.2;
+                      font-size: 1.25rem;
+                    "
+                    >{{ custReference }}</b
+                  >
+                </p>
+                <p
+                  class="text-uppercase"
+                  style="
+                    box-sizing: border-box;
+                    margin-top: 0;
+                    margin-bottom: 1rem;
+                    orphans: 3;
+                    widows: 3;
+                    text-transform: uppercase !important;
+                  "
+                >
+                  Amount:
+                  <b
+                    class="h5 font-weight-bolder"
+                    style="
+                      box-sizing: border-box;
+                      font-weight: bolder !important;
+                      margin-bottom: 0.5rem;
+                      line-height: 1.2;
+                      font-size: 1.25rem;
+                    "
+                    >&#8358;{{ amount }}</b
+                  >
+                </p>
+                <p
+                  class="mb-1"
+                  style="
+                    box-sizing: border-box;
+                    margin-top: 0;
+                    margin-bottom: 0.25rem !important;
+                    orphans: 3;
+                    widows: 3;
+                  "
+                >
+                  &nbsp;
+                </p>
+              </div>
+            </div>
+
+            <div
+              class="row p-3 px-5"
+              style="
+                box-sizing: border-box;
+                font-family: Poppins;
+                font-size: 14px;
+                font-weight: 500;
+                color: #6c757d;
+                overflow: visible;
+                display: flex;
+                -ms-flex-wrap: wrap;
+                flex-wrap: wrap;
+                margin-right: -15px;
+                margin-left: -15px;
+                padding: 1rem !important;
+                padding-right: 3rem !important;
+                padding-left: 3rem !important;
+              "
+            >
+              <div
+                class="col-md-12"
+                style="
+                  box-sizing: border-box;
+                  font-family: Poppins;
+                  font-size: 14px;
+                  font-weight: 500;
+                  color: #6c757d;
+                  overflow: visible;
+                  position: relative;
+                  width: 100%;
+                  padding-right: 15px;
+                  padding-left: 15px;
+                  -ms-flex: 0 0 100%;
+                  flex: 0 0 100%;
+                  max-width: 100%;
+                "
+              >
+                <table
+                  class="table table-striped"
+                  style="
+                    box-sizing: border-box;
+                    border-collapse: collapse !important;
+                    width: 100%;
+                    margin-bottom: 1rem;
+                    color: #212529;
+                  "
+                >
+                  <thead
+                    style="box-sizing: border-box; display: table-header-group"
+                  >
+                    <tr
+                      style="box-sizing: border-box; page-break-inside: avoid"
+                    >
+                      <th
+                        class="border-0 text-uppercase small font-weight-bold"
+                        style="
+                          box-sizing: border-box;
+                          text-align: inherit;
+                          font-size: 80%;
+                          font-weight: 700 !important;
+                          padding: 0.75rem;
+                          vertical-align: bottom;
+                          border-top: 1px solid #dee2e6;
+                          border-bottom: 2px solid #dee2e6;
+                          border: 0 !important;
+                          text-transform: uppercase !important;
+                          background-color: #fff !important;
+                        "
+                      >
+                        Description
+                      </th>
+                      <th
+                        class="border-0 text-uppercase small font-weight-bold"
+                        style="
+                          box-sizing: border-box;
+                          text-align: inherit;
+                          font-size: 80%;
+                          font-weight: 700 !important;
+                          padding: 0.75rem;
+                          vertical-align: bottom;
+                          border-top: 1px solid #dee2e6;
+                          border-bottom: 2px solid #dee2e6;
+                          border: 0 !important;
+                          text-transform: uppercase !important;
+                          background-color: #fff !important;
+                        "
+                      >
+                        Pencom Category
+                      </th>
+                      <th
+                        class="border-0 text-uppercase small font-weight-bold"
+                        style="
+                          box-sizing: border-box;
+                          text-align: inherit;
+                          font-size: 80%;
+                          font-weight: 700 !important;
+                          padding: 0.75rem;
+                          vertical-align: bottom;
+                          border-top: 1px solid #dee2e6;
+                          border-bottom: 2px solid #dee2e6;
+                          border: 0 !important;
+                          text-transform: uppercase !important;
+                          background-color: #fff !important;
+                        "
+                      >
+                        Period
+                      </th>
+                      <th
+                        class="border-0 text-uppercase small font-weight-bold"
+                        style="
+                          box-sizing: border-box;
+                          text-align: inherit;
+                          font-size: 80%;
+                          font-weight: 700 !important;
+                          padding: 0.75rem;
+                          vertical-align: bottom;
+                          border-top: 1px solid #dee2e6;
+                          border-bottom: 2px solid #dee2e6;
+                          border: 0 !important;
+                          text-transform: uppercase !important;
+                          background-color: #fff !important;
+                        "
+                      >
+                        Amount
+                      </th>
+                      <th
+                        class="border-0 text-uppercase small font-weight-bold"
+                        style="
+                          box-sizing: border-box;
+                          text-align: inherit;
+                          font-size: 80%;
+                          font-weight: 700 !important;
+                          padding: 0.75rem;
+                          vertical-align: bottom;
+                          border-top: 1px solid #dee2e6;
+                          border-bottom: 2px solid #dee2e6;
+                          border: 0 !important;
+                          text-transform: uppercase !important;
+                          background-color: #fff !important;
+                        "
+                      >
+                        Paid
+                      </th>
+                    </tr>
+                  </thead>
+                  <tbody style="box-sizing: border-box">
+                    <tr
+                      style="box-sizing: border-box; page-break-inside: avoid"
+                    >
+                      <td
+                        style="
+                          box-sizing: border-box;
+                          padding: 0.75rem;
+                          vertical-align: top;
+                          border-top: 1px solid #dee2e6;
+                          background-color: #fff !important;
+                        "
+                      >
+                        Pencom Payment
+                      </td>
+                      <td
+                        style="
+                          box-sizing: border-box;
+                          padding: 0.75rem;
+                          vertical-align: top;
+                          border-top: 1px solid #dee2e6;
+                          background-color: #fff !important;
+                        "
+                      >
+                        {{ itemName }}
+                      </td>
+                      <td
+                        style="
+                          box-sizing: border-box;
+                          padding: 0.75rem;
+                          vertical-align: top;
+                          border-top: 1px solid #dee2e6;
+                          background-color: #fff !important;
+                        "
+                      >
+                        {{ monthPaid }}, {{ yearPaid }}
+                      </td>
+                      <td
+                        style="
+                          box-sizing: border-box;
+                          padding: 0.75rem;
+                          vertical-align: top;
+                          border-top: 1px solid #dee2e6;
+                          background-color: #fff !important;
+                        "
+                      >
+                        &#8358;{{ amount }}
+                      </td>
+                      <td
+                        style="
+                          box-sizing: border-box;
+                          padding: 0.75rem;
+                          vertical-align: top;
+                          border-top: 1px solid #dee2e6;
+                          background-color: #fff !important;
+                        "
+                      >
+                        {{ paymentStatus }}
+                      </td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+            </div>
+
+            <div
+              class="container-fluid bg-dark text-white"
+              style="
+                box-sizing: border-box;
+                font-family: Poppins;
+                font-size: 14px;
+                font-weight: 500;
+                color: #fff !important;
+                overflow: visible;
+                width: 100%;
+                padding-right: 15px;
+                padding-left: 15px;
+                margin-right: auto;
+                margin-left: auto;
+                background-color: #343a40 !important;
+              "
+            >
+              <div
+                class="row p-5 d-flex justify-content-between"
+                style="
+                  box-sizing: border-box;
+                  font-family: Poppins;
+                  font-size: 14px;
+                  font-weight: 500;
+                  color: #6c757d;
+                  overflow: visible;
+                  display: flex !important;
+                  -ms-flex-wrap: wrap;
+                  flex-wrap: wrap;
+                  margin-right: -15px;
+                  margin-left: -15px;
+                  -ms-flex-pack: justify !important;
+                  justify-content: space-between !important;
+                  padding: 3rem !important;
+                "
+              >
+                <div
+                  class=""
+                  style="
+                    box-sizing: border-box;
+                    font-family: Poppins;
+                    font-size: 14px;
+                    font-weight: 500;
+                    color: #6c757d;
+                    overflow: visible;
+                  "
+                >
+                  <span class="" style="box-sizing: border-box">
+                    <img
+                      src="{{scheduleUrl}}"
+                      alt=""
+                      width="90"
+                      height="90"
+                      style="
+                        box-sizing: border-box;
+                        vertical-align: middle;
+                        border-style: none;
+                        page-break-inside: avoid;
+                      "
+                    />
+                  </span>
+                </div>
+                <div
+                  class=""
+                  style="
+                    box-sizing: border-box;
+                    font-family: Poppins;
+                    font-size: 14px;
+                    font-weight: 500;
+                    color: #6c757d;
+                    overflow: visible;
+                  "
+                >
+                  <div
+                    class=""
+                    style="
+                      box-sizing: border-box;
+                      font-family: Poppins;
+                      font-size: 14px;
+                      font-weight: 500;
+                      color: #6c757d;
+                      overflow: visible;
+                    "
+                  >
+                    <h5
+                      class="text-muted"
+                      style="
+                        box-sizing: border-box;
+                        margin-top: 0;
+                        margin-bottom: 0.5rem;
+                        font-weight: 500;
+                        line-height: 1.2;
+                        font-size: 1.25rem;
+                        color: #6c757d !important;
+                      "
+                    >
+                      Note to Agent
+                    </h5>
+                    <span style="box-sizing: border-box">
+                      Proceed to any Bank to make Payment to fund your wallet.
+                      Mandate also sent to email ({{ userEmail }})
+                    </span>
+                  </div>
+                  <div
+                    class="mt-5"
+                    style="
+                      box-sizing: border-box;
+                      font-family: Poppins;
+                      font-size: 14px;
+                      font-weight: 500;
+                      color: #6c757d;
+                      overflow: visible;
+                      margin-top: 3rem !important;
+                    "
+                  >
+                    <h5
+                      class="text-muted"
+                      style="
+                        box-sizing: border-box;
+                        margin-top: 0;
+                        margin-bottom: 0.5rem;
+                        font-weight: 500;
+                        line-height: 1.2;
+                        font-size: 1.25rem;
+                        color: #6c757d !important;
+                      "
+                    >
+                      Note to Bank Teller
+                    </h5>
+                    <span style="box-sizing: border-box">
+                      Visit
+                      <a
+                        class="text-decoration-none text-white"
+                        target="_blank"
+                        href="https://www.quickteller.com/"
+                        style="
+                          box-sizing: border-box;
+                          color: #fff !important;
+                          text-decoration: none !important;
+                          background-color: transparent;
+                        "
+                        >https://www.quickteller.com to make payment for this
+                        mandate.
+                      </a></span
+                    >
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <!-- end container-fluid -->
+
+      <!-- </div> -->
+    </div>
+  </body>
+</html>
