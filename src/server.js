@@ -56,7 +56,7 @@ server.on("error", (e) => {
 server.listen(config.PORT, () => {
   console.log([
     "---------------------------",
-    "Server Running",
+    "Server Running, for good",
     "---------------------------",
     `Port: ${server.address().port}`,
     "---------------------------",
