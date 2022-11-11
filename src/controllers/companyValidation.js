@@ -102,8 +102,8 @@ const makeAdminStaff = async (req, res, next) => {
 
 const companyValidate = async (req, res, next) => {
   try {
-    // Get the token parameters
-    let { userType, agentId, companyName } = req.user;
+    // TODO:Get the token parameters
+    let { userType, agentId, companyName, email, phone } = req.user;
 
     // declaring all variables
     let { companyCode } = req.body;
@@ -151,11 +151,12 @@ const companyValidate = async (req, res, next) => {
     }
 
     // if no validation exists at all, make a call to the company and log the response
-    let { validationStatus, email, phone, validationMessage } =
-      await companyValidationCall({
-        agentId,
-        companyCode,
-      });
+    let { validationStatus, validationMessage } = await companyValidationCall({
+      agentId,
+      companyCode,
+      email,
+      phone,
+    });
 
     // if there was any error with the validation
     if (!validationStatus) throw new BadRequestError(validationMessage);

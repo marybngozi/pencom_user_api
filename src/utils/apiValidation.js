@@ -3,7 +3,12 @@ const config = require("../config");
 const CompanyValidation = require("../data/companyValidation");
 const { ServerError } = require("../utils/errors");
 
-const companyValidationCall = async ({ agentId, companyCode }) => {
+const companyValidationCall = async ({
+  agentId,
+  companyCode,
+  email,
+  phone,
+}) => {
   // make call and create the validation
   try {
     const data = JSON.stringify({
@@ -90,8 +95,8 @@ const companyValidationCall = async ({ agentId, companyCode }) => {
 
     // TODO: remove mock data
     const genericDataObj = {
-      EmailAddress: "umunnawill@gmail.com",
-      PhoneNumber: "08136587946",
+      EmailAddress: email,
+      PhoneNumber: phone,
     };
 
     await CompanyValidation.createValidation({
