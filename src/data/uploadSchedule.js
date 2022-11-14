@@ -122,6 +122,7 @@ const getUnpaidUploadBatch = async ({
 };
 
 const getUnpaidUploads = async (uploadBatchId) => {
+  console.log(uploadBatchId);
   const reqObj = {
     deleted: false,
     paid: 0,
@@ -129,12 +130,17 @@ const getUnpaidUploads = async (uploadBatchId) => {
     uploadBatchId: uploadBatchId,
   };
 
-  return await UploadSchedule.find(reqObj, {
-    uploadType: 0,
-    updatedAt: 0,
-    deletedAt: 0,
-    dateProcessed: 0,
-  });
+  return await UploadSchedule.aggregate([
+    { $match: reqObj },
+    {
+      $lookup: {
+        from: "pfas", // collection name in db
+        localField: "pfaCode",
+        foreignField: "pfaCode",
+        as: "pfa",
+      },
+    },
+  ]);
 };
 
 const checkBatchName = async (batchId, agentId, itemCode) => {
