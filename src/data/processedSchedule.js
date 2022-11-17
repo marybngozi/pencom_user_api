@@ -118,13 +118,63 @@ const getAllProcessedScheduleItems = async ({ invoiceNo, paid }) => {
     findObj["paid"] = paid;
   }
 
-  return ProcessedScheduleItem.find(findObj, {
-    updatedAt: 0,
-    deletedAt: 0,
-    deleted: false,
-  })
-    .sort({ amount: "asc" })
-    .populate("id");
+  // return ProcessedScheduleItem.find(findObj, {
+  //   updatedAt: 0,
+  //   deletedAt: 0,
+  //   deleted: false,
+  // })
+  //   .sort({ amount: "asc" })
+  //   .populate("id");
+  return ProcessedScheduleItem.aggregate([
+    {
+      $match: findObj,
+    },
+    {
+      $lookup: {
+        from: "uploadschedules", // collection name in db
+        localField: "id",
+        foreignField: "_id",
+        as: "item",
+      },
+    },
+    {
+      $set: {
+        item: {
+          $arrayElemAt: ["$item", 0],
+        },
+      },
+    },
+    {
+      $lookup: {
+        from: "pfas", // collection name in db
+        localField: "item.pfaCode",
+        foreignField: "pfaCode",
+        as: "pfa",
+      },
+    },
+    {
+      $set: {
+        pfa: {
+          $arrayElemAt: ["$pfa", 0],
+        },
+      },
+    },
+    {
+      $lookup: {
+        from: "pfcs", // collection name in db
+        localField: "pfa.pfc",
+        foreignField: "_id",
+        as: "pfc",
+      },
+    },
+    {
+      $set: {
+        pfc: {
+          $arrayElemAt: ["$pfc", 0],
+        },
+      },
+    },
+  ]);
 };
 
 const getProcessedScheduleItemsNP = async ({ invoiceNo, paid }) => {

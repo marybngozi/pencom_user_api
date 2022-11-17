@@ -122,6 +122,13 @@ module.exports = () => {
     validator.listProcessedScheduleItem,
     scheduleController.getPaymentDetails
   );
+  // download processed items
+  api.post(
+    "/download-processed-items",
+    authenticate,
+    validator.listProcessedScheduleItem,
+    scheduleController.downloadProcessedItems
+  );
 
   return api;
 };

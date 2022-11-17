@@ -1,4 +1,5 @@
 const mongoose = require("mongoose");
+const { ProcessedScheduleItem } = require("../models/processedScheduleItem");
 const { UploadSchedule } = require("../models/uploadSchedule");
 const { UploadTask } = require("../models/uploadTask");
 
@@ -122,7 +123,6 @@ const getUnpaidUploadBatch = async ({
 };
 
 const getUnpaidUploads = async (uploadBatchId) => {
-  console.log(uploadBatchId);
   const reqObj = {
     deleted: false,
     paid: 0,
@@ -171,8 +171,8 @@ const processSumCount = async ({
     companyCode,
   };
 
-  if (processedStatus) {
-    reqObj["processedStatus"] = 1;
+  if (processedStatus || processedStatus === 0) {
+    reqObj["processedStatus"] = processedStatus;
   }
 
   const upload = await UploadSchedule.find(
@@ -207,6 +207,179 @@ const processSumCount = async ({
   ]);
 
   return { upload, sumed };
+};
+
+const processSumCountMandate = async (invoiceNo) => {
+  // group processed item by pfcs and sub group by pfas
+  const items = await ProcessedScheduleItem.aggregate([
+    {
+      $match: {
+        invoiceNo: invoiceNo,
+        deleted: false,
+      },
+    },
+    {
+      $lookup: {
+        from: "uploadschedules",
+        localField: "id",
+        foreignField: "_id",
+        as: "schedule",
+      },
+    },
+    {
+      $lookup: {
+        from: "processedschedules",
+        localField: "invoiceNo",
+        foreignField: "invoiceNo",
+        as: "invoice",
+      },
+    },
+    {
+      $set: {
+        schedule: {
+          $arrayElemAt: ["$schedule", 0],
+        },
+        month: {
+          $arrayElemAt: ["$invoice.month", 0],
+        },
+        invoiceAmount: {
+          $arrayElemAt: ["$invoice.amount", 0],
+        },
+        year: {
+          $arrayElemAt: ["$invoice.year", 0],
+        },
+        invoiceNo: {
+          $arrayElemAt: ["$invoice.invoiceNo", 0],
+        },
+        paymentStatus: {
+          $arrayElemAt: ["$invoice.paymentStatus", 0],
+        },
+        companyCode: {
+          $arrayElemAt: ["$invoice.companyCode", 0],
+        },
+      },
+    },
+    {
+      $lookup: {
+        from: "pfas",
+        localField: "schedule.pfaCode",
+        foreignField: "pfaCode",
+        as: "pfa",
+      },
+    },
+    {
+      $set: {
+        pfa: {
+          $arrayElemAt: ["$pfa", 0],
+        },
+      },
+    },
+    {
+      $lookup: {
+        from: "pfcs",
+        localField: "pfa.pfc",
+        foreignField: "_id",
+        as: "pfc",
+      },
+    },
+    {
+      $set: {
+        pfc: {
+          $arrayElemAt: ["$pfc", 0],
+        },
+      },
+    },
+    {
+      $group: {
+        _id: "$pfa.pfaCode",
+        pfcName: {
+          $first: "$pfc.pfcName",
+        },
+        itemCode: {
+          $first: "$schedule.itemCode",
+        },
+        invoiceAmount: {
+          $first: "$invoiceAmount",
+        },
+        paymentStatus: {
+          $first: "$paymentStatus",
+        },
+        invoiceNo: {
+          $first: "$invoiceNo",
+        },
+        month: {
+          $first: "$month",
+        },
+        year: {
+          $first: "$year",
+        },
+        itemCount: {
+          $count: {},
+        },
+        companyCode: {
+          $first: "$companyCode",
+        },
+        pfcId: {
+          $first: "$pfc._id",
+        },
+        pfaName: {
+          $first: "$pfa.pfaName",
+        },
+        pfaAmount: {
+          $sum: "$amount",
+        },
+        schedules: {
+          $push: "$schedule",
+        },
+      },
+    },
+    {
+      $group: {
+        _id: "$pfcId",
+        pfc: {
+          $first: "$pfcName",
+        },
+        itemCode: {
+          $first: "$itemCode",
+        },
+        month: {
+          $first: "$month",
+        },
+        invoiceAmount: {
+          $first: "$invoiceAmount",
+        },
+        invoiceNo: {
+          $first: "$invoiceNo",
+        },
+        year: {
+          $first: "$year",
+        },
+        paymentStatus: {
+          $first: "$paymentStatus",
+        },
+        companyCode: {
+          $first: "$companyCode",
+        },
+        pfcAmount: {
+          $sum: "$pfaAmount",
+        },
+        itemCount: {
+          $sum: "$itemCount",
+        },
+        pfas: {
+          $push: {
+            pfaCode: "$_id",
+            pfaAmount: "$pfaAmount",
+            itemCount: "$itemCount",
+            pfa: "$pfaName",
+            schedules: "$schedules",
+          },
+        },
+      },
+    },
+  ]);
+
+  return items;
 };
 
 const updateProcessed = async (arr) => {
@@ -327,6 +500,119 @@ const getTransactions = async (rsaPin) => {
   ]);
 };
 
+const processSumCountItems = async (invoiceNo) => {
+  // group processed item by pfcs and sub group by pfas
+  const items = await ProcessedScheduleItem.aggregate([
+    {
+      $match: {
+        invoiceNo: invoiceNo,
+        deleted: false,
+      },
+    },
+    {
+      $lookup: {
+        from: "uploadschedules",
+        localField: "id",
+        foreignField: "_id",
+        as: "schedule",
+      },
+    },
+    {
+      $lookup: {
+        from: "processedschedules",
+        localField: "invoiceNo",
+        foreignField: "invoiceNo",
+        as: "invoice",
+      },
+    },
+    {
+      $set: {
+        schedule: {
+          $arrayElemAt: ["$schedule", 0],
+        },
+        month: {
+          $arrayElemAt: ["$invoice.month", 0],
+        },
+        invoiceAmount: {
+          $arrayElemAt: ["$invoice.amount", 0],
+        },
+        year: {
+          $arrayElemAt: ["$invoice.year", 0],
+        },
+        invoiceNo: {
+          $arrayElemAt: ["$invoice.invoiceNo", 0],
+        },
+        paymentStatus: {
+          $arrayElemAt: ["$invoice.paymentStatus", 0],
+        },
+        companyCode: {
+          $arrayElemAt: ["$invoice.companyCode", 0],
+        },
+      },
+    },
+    {
+      $lookup: {
+        from: "pfas",
+        localField: "schedule.pfaCode",
+        foreignField: "pfaCode",
+        as: "pfa",
+      },
+    },
+    {
+      $set: {
+        pfa: {
+          $arrayElemAt: ["$pfa", 0],
+        },
+      },
+    },
+    {
+      $lookup: {
+        from: "pfcs",
+        localField: "pfa.pfc",
+        foreignField: "_id",
+        as: "pfc",
+      },
+    },
+    {
+      $set: {
+        pfc: {
+          $arrayElemAt: ["$pfc", 0],
+        },
+      },
+    },
+    {
+      $project: {
+        pfc: "$pfc.pfcName",
+        pfa: "$pfa.pfaName",
+        pfcId: "$pfc._id",
+        pfaCode: "$pfa.pfaCode",
+        staffId: "$schedule.staffId",
+        rsaPin: "$schedule.rsaPin",
+        amount: "$schedule.amount",
+        firstName: "$schedule.firstName",
+        lastName: "$schedule.lastName",
+        employeeNormalContribution: "$schedule.employeeNormalContribution",
+        employerNormalContribution: "$schedule.employerNormalContribution",
+        employeeVoluntaryContribution:
+          "$schedule.employeeVoluntaryContribution",
+        employerVoluntaryContribution:
+          "$schedule.employerVoluntaryContribution",
+        month: "$schedule.month",
+        year: "$schedule.year",
+        paid: "$schedule.paid",
+      },
+    },
+    {
+      $sort: {
+        pfc: 1,
+        pfa: 1,
+      },
+    },
+  ]);
+
+  return items;
+};
+
 module.exports = {
   addSchedules,
   aggregateAndCount,
@@ -345,4 +631,6 @@ module.exports = {
   getTasks,
   deleteTask,
   getTransactions,
+  processSumCountMandate,
+  processSumCountItems,
 };

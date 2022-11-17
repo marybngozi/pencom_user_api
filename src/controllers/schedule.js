@@ -1,4 +1,5 @@
 const fs = require("fs");
+const path = require("path");
 const moment = require("moment");
 const QRCode = require("qrcode");
 const EventEmitter = require("events");
@@ -151,7 +152,7 @@ const summarizeSchedule = async (req, res, next) => {
     const pfas = await User.getAllPfas("include");
     if (!pfas.length) throw new NotFoundError("PFAs not found");
 
-    let findObj = { month, year, itemCode, companyCode };
+    let findObj = { month, year, itemCode, companyCode, processedStatus: 0 };
 
     // Get the total for all pfas for the given month and year
     let { upload, sumed } = await UploadSchedule.processSumCount(findObj);
@@ -506,59 +507,23 @@ const getMandate = async (req, res, next) => {
   try {
     // Get the body parameters
     let { invoiceNo } = req.body;
-    // get the processed remittance using the custReference
-    const processedUpload = await ProcessedSchedule.getProcessedSchedule(
-      invoiceNo
-    );
 
-    if (!processedUpload) throw new BadRequestError("Mandate not found");
+    // Get the total for all pfas for that invoice
+    let uploadItems = await UploadSchedule.processSumCountMandate(invoiceNo);
 
-    let theCountsMain = {};
-
-    // get all pfas and their pfc details
-    const pfas = await User.getAllPfas("include");
-    if (!pfas.length) throw new NotFoundError("PFAs not found");
-
-    let findObj = {
-      month: processedUpload.month,
-      year: processedUpload.year,
-      itemCode: processedUpload.itemCode,
-      companyCode: processedUpload.companyCode,
-    };
-
-    // Get the total for all pfas for the given month and year
-    let { sumed } = await UploadSchedule.processSumCount(findObj);
-    console.log(sumed);
-
-    if (sumed.length) {
-      for (let i = 0; i < sumed.length; i++) {
-        const val = sumed[i];
-        const valPfa = pfas.find((pfa) => val._id == pfa.pfaCode);
-        sumed[i] = {
-          ...sumed[i],
-          pfaName: valPfa.pfaName,
-          pfcId: valPfa.pfc.id,
-        };
-
-        if (!theCountsMain[valPfa.pfc.pfcName]) {
-          theCountsMain[valPfa.pfc.pfcName] = [];
-        }
-
-        theCountsMain[valPfa.pfc.pfcName].push(sumed[i]);
-      }
-    }
+    if (!uploadItems.length) throw new BadRequestError("Invoice is invalid");
 
     // get company data
     const company = await User.getUser({
-      companyCode: processedUpload.companyCode,
+      companyCode: uploadItems[0].companyCode,
     });
 
     // get the item details
-    const item = await Item.findItem(processedUpload.itemCode);
+    const item = await Item.findItem(uploadItems[0].itemCode);
     if (!item) throw new BadRequestError("No Item found");
 
     const data = {
-      item: processedUpload,
+      // item: uploadItems,
       itemName: item.itemName,
       companyName: company.companyName,
       companyCode: company.companyCode,
@@ -567,7 +532,7 @@ const getMandate = async (req, res, next) => {
     return res.status(200).json({
       message: "Mandate details fetched successfully",
       data: data,
-      items: theCountsMain,
+      items: uploadItems,
       meta: {
         currentPage: 1,
         pageSize: 1,
@@ -640,7 +605,7 @@ const getContribution = async (req, res, next) => {
     console.log({ transactions });
 
     return res.status(200).json({
-      message: "Mandate details fetched successfully",
+      message: "Contributions details fetched successfully",
       data: transactions,
       meta: {
         currentPage: 1,
@@ -650,6 +615,72 @@ const getContribution = async (req, res, next) => {
     });
   } catch (e) {
     console.log("scheduleController-getMandate", e);
+    next(e);
+  }
+};
+
+const downloadProcessedItems = async (req, res, next) => {
+  try {
+    // Get the token parameters
+    let { invoiceNo } = req.body;
+
+    const uploadItems = await UploadSchedule.processSumCountItems(invoiceNo);
+
+    if (!uploadItems.length) throw new BadRequestError("No item found");
+
+    // format data
+    uploadItems.forEach((item, i) => {
+      const newItem = {
+        MONTH: moment()
+          .set("month", Number(item.month) - 1)
+          .format("MMMM"),
+        YEAR: item.year,
+        PFC: item.pfc,
+        PFA: item.pfa,
+        "PFA CODE": item.pfaCode,
+        "STAFF ID": item.staffId,
+        "RSA PIN": item.rsaPin,
+        AMOUNT: item.amount,
+        "FIRST NAME": item.firstName,
+        "LAST NAME": item.lastName,
+        "EMPLOYEE NORMAL CONTRIBUTION": item.employeeNormalContribution,
+        "EMPLOYER NORMAL CONTRIBUTION": item.employerNormalContribution,
+        "EMPLOYEE VOLUNTARY CONTRIBUTION": item.employeeVoluntaryContribution,
+        "EMPLOYER VOLUNTARY CONTRIBUTION": item.employerVoluntaryContribution,
+        paid: item.paid == 1 ? "Paid" : "Not Paid",
+      };
+      uploadItems[i] = newItem;
+    });
+
+    const fileName = `${Date.now()}-processed_schedule.xlsx`;
+    const filePath = path.join(
+      __basedir + "/public/uploads/schedule",
+      fileName
+    );
+    await createExcel(uploadItems, filePath);
+
+    console.log("scheduleController.downloadProcessedItems: started");
+    const file = fs.createReadStream(filePath);
+
+    // deletes the file after download
+    file.on("end", () => {
+      fs.unlink(filePath, () => {
+        console.log(
+          `scheduleController.downloadProcessedItems: file ${filePath} deleted`
+        );
+      });
+    });
+
+    let filename = filePath.split("-").pop();
+    filename = filename.split(".")[0];
+
+    res.setHeader(
+      "Content-Disposition",
+      'attachment: filename="' + filename + '"'
+    );
+    file.pipe(res);
+  } catch (e) {
+    console.log("scheduleController-downloadProcessedItems", e);
     next(e);
   }
 };
@@ -670,4 +701,5 @@ module.exports = {
   removeTask,
   getBatchSchedule,
   getContribution,
+  downloadProcessedItems,
 };

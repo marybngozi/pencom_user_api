@@ -30,6 +30,7 @@ const getUser = async ({ email, rsaPin, companyCode }) => {
   };
   if (companyCode) {
     findObj["companyCode"] = companyCode;
+    findObj["userType"] = 100;
   } else if (email) {
     findObj["email"] = email;
   } else if (rsaPin) {
