@@ -29,9 +29,13 @@ const documentSchema = new Schema(
       type: Number,
       required: true,
       default: 100,
-      /* 100 for company, 
+      /* 
+      100 for company, 
       200 for staff, 
-      300 for AdminStaff */
+      300 for AdminStaff 
+      400 for pfc 
+      500 for pfa
+      */
     },
     phone: {
       type: String,

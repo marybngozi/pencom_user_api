@@ -9,6 +9,10 @@ const documentSchema = new Schema(
       unique: true,
       required: false,
     },
+    userId: {
+      type: Schema.Types.ObjectId,
+      ref: "User",
+    },
     createdAt: {
       type: Date,
       required: true,

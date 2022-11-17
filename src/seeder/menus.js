@@ -74,6 +74,12 @@ const SubMenus = [
     menuId: "636e66ae8c142e6cc9c6b291",
     menuType: "staff",
   },
+  {
+    name: "View Company",
+    path: "/view-company",
+    menuId: "636b54c977cd215910d2dc66",
+    menuType: "adminStaff",
+  },
 ];
 
 module.exports = { MainMenus, SubMenus };
