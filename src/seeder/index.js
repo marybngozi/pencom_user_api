@@ -8,26 +8,26 @@ const { MainMenus, SubMenus } = require("./menus");
 
 // update this
 const data = [
-  {
-    model: "User",
-    documents: PfcUsers,
-  },
-  {
-    model: "Pfc",
-    documents: Pfcs,
-  },
-  {
-    model: "State",
-    documents: States,
-  },
-  {
-    model: "Pfa",
-    documents: Pfas,
-  },
-  {
-    model: "Item",
-    documents: Items,
-  },
+  // {
+  //   model: "User",
+  //   documents: PfcUsers,
+  // },
+  // {
+  //   model: "Pfc",
+  //   documents: Pfcs,
+  // },
+  // {
+  //   model: "State",
+  //   documents: States,
+  // },
+  // {
+  //   model: "Pfa",
+  //   documents: Pfas,
+  // },
+  // {
+  //   model: "Item",
+  //   documents: Items,
+  // },
   {
     model: "MainMenu",
     documents: MainMenus,
@@ -42,19 +42,19 @@ const data = [
 seeder.connect(config.MONGODB_URI, () => {
   // Load Mongoose models
   seeder.loadModels([
-    "./src/models/user.js",
-    "./src/models/pfc.js",
-    "./src/models/state.js",
-    "./src/models/pfa.js",
-    "./src/models/item.js",
+    // "./src/models/user.js",
+    // "./src/models/pfc.js",
+    // "./src/models/state.js",
+    // "./src/models/pfa.js",
+    // "./src/models/item.js",
     "./src/models/mainMenu.js",
     "./src/models/subMenu.js",
   ]);
 
   // Clear specified collections
   seeder.clearModels(
-    // ["MainMenu", "SubMenu"],
-    ["Pfc", "State", "Pfa", "Item", "MainMenu", "SubMenu"],
+    ["MainMenu", "SubMenu"],
+    // ["Pfc", "State", "Pfa", "Item", "MainMenu", "SubMenu"],
     () => {
       // Callback to populate DB once collections have been cleared
       seeder.populateModels(data, () => {

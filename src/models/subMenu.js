@@ -20,7 +20,7 @@ const documentSchema = new Schema(
     },
     menuType: {
       type: String,
-      enum: ["company", "staff", "adminStaff"],
+      enum: ["company", "staff", "adminStaff", "pfa"],
       default: "company",
       required: true,
     },

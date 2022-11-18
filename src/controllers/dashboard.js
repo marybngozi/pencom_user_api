@@ -6,12 +6,7 @@ const { NotFoundError } = require("../utils/errors");
 const countItemMonth = async (req, res, next) => {
   try {
     // Get the token parameters
-    let { userType, companyCode, rsaPin } = req.user;
-
-    // Get Records for the Month
-    // const date = new Date();
-    // const startDate = new Date(date.getFullYear(), date.getMonth(), 1);
-    // const endDate = new Date(date.getFullYear(), date.getMonth() + 1, 0);
+    let { id: agentId, userType, companyCode, rsaPin } = req.user;
 
     let stat = {};
 
@@ -20,13 +15,22 @@ const countItemMonth = async (req, res, next) => {
     // for companies and admin staff
     if ((userType == 100 || userType == 300) && companyCode) {
       findObj["companyCode"] = companyCode;
-    } else {
-      // for staff
+    }
+    // for staff
+    if (userType == 200) {
       findObj["rsaPin"] = rsaPin;
       findObj["paid"] = 1;
     }
 
-    let sums = await UploadSchedule.aggregateAndCount("month", findObj);
+    let sums = [];
+
+    if (userType != 400) {
+      sums = await UploadSchedule.aggregateAndCount("month", findObj);
+    } else {
+      sums = await UploadSchedule.aggregateAndCountPfa("month", agentId);
+    }
+
+    console.log(sums);
 
     if (sums.length > 0) {
       stat = sums[0];
@@ -60,11 +64,7 @@ const countItemMonth = async (req, res, next) => {
 const countItemYear = async (req, res, next) => {
   try {
     // Get the token parameters
-    let { userType, rsaPin, companyCode } = req.user;
-
-    // Get Records for the year
-    // const startDate = new Date(new Date().getFullYear(), 0, 1);
-    // const endDate = new Date();
+    let { id: agentId, userType, rsaPin, companyCode } = req.user;
 
     let stat = {};
 
@@ -79,7 +79,13 @@ const countItemYear = async (req, res, next) => {
       findObj["paid"] = 1;
     }
 
-    let sums = await UploadSchedule.aggregateAndCount("year", findObj);
+    let sums = [];
+
+    if (userType != 400) {
+      sums = await UploadSchedule.aggregateAndCount("year", findObj);
+    } else {
+      sums = await UploadSchedule.aggregateAndCountPfa("year", agentId);
+    }
 
     if (sums.length > 0) {
       stat = sums[0];
@@ -155,24 +161,27 @@ const getStates = async (req, res, next) => {
 const sumYearMonths = async (req, res, next) => {
   try {
     // Get the token parameters
-    let { userType, rsaPin, companyCode } = req.user;
-
-    // Get Records for the year
-    // const startDate = new Date(new Date().getFullYear(), 0, 1);
-    // const endDate = new Date();
+    let { id: agentId, userType, rsaPin, companyCode } = req.user;
 
     const findObj = {};
 
     // for companies and admin staff
     if ((userType == 100 || userType == 300) && companyCode) {
       findObj["companyCode"] = companyCode;
-    } else {
-      // for staff
+    }
+    // for staff
+    if (userType == 200) {
       findObj["rsaPin"] = rsaPin;
       findObj["paid"] = 1;
     }
 
-    let sums = await UploadSchedule.aggregateSumGroup(findObj);
+    let sums = [];
+
+    if (userType != 400) {
+      sums = await UploadSchedule.aggregateSumGroup(findObj);
+    } else {
+      sums = await UploadSchedule.aggregateSumGroupPfa(agentId);
+    }
 
     return res.status(200).json({
       message: "Year months stat fetched successfully",

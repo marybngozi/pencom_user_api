@@ -295,13 +295,13 @@ const scheduleStatus = async (req, res, next) => {
 const removeTask = async (req, res, next) => {
   try {
     // Get the token parameters
-    let { id } = req.user;
+    let { id } = req.body;
 
-    const tasks = await UploadSchedule.deleteTask(id);
+    const task = await UploadSchedule.deleteTask(id);
 
     return res.status(200).json({
       message: "Schedule Tasks deleted successfully",
-      data: tasks,
+      data: task,
       meta: {
         currentPage: 1,
         pageSize: 1,

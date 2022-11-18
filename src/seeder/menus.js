@@ -80,6 +80,18 @@ const SubMenus = [
     menuId: "636b54c977cd215910d2dc66",
     menuType: "adminStaff",
   },
+  {
+    name: "Create Sub Admin",
+    path: "/create-subadmin",
+    menuId: "636b54c977cd215910d2dc66",
+    menuType: "pfa",
+  },
+  {
+    name: "View Contribution",
+    path: "/view-contribution",
+    menuId: "636e66ae8c142e6cc9c6b291",
+    menuType: "pfa",
+  },
 ];
 
 module.exports = { MainMenus, SubMenus };

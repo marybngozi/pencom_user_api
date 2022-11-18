@@ -19,6 +19,11 @@ const documentSchema = new Schema(
       ref: "Pfc",
       required: true,
     },
+    userId: {
+      type: Schema.Types.ObjectId,
+      ref: "User",
+      required: false,
+    },
     createdAt: {
       type: Date,
       required: true,

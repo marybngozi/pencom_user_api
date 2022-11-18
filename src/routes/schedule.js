@@ -48,7 +48,7 @@ module.exports = () => {
     validator.processSchedule,
     scheduleController.processSchedule
   );
-  // TODO:upload Excel schedule
+  // upload Excel schedule
   api.post(
     "/upload-excel",
     authenticate,

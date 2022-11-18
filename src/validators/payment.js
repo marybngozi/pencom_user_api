@@ -18,6 +18,50 @@ const walletPayment = async (req, res, next) => {
     });
   }
 };
+
+const listBatchContributionsSchema = Joi.object({
+  itemCode: Joi.any(),
+  dateStart: Joi.any(),
+  dateEnd: Joi.any(),
+});
+
+const listBatchContributions = async (req, res, next) => {
+  try {
+    await listBatchContributionsSchema.validateAsync(req.body, {
+      abortEarly: true,
+    });
+    next();
+  } catch (err) {
+    console.log("listBatchContributionsValidator", err.message);
+    return res.status(400).json({
+      message: err.message,
+      errorCode: "V400",
+    });
+  }
+};
+
+const listContributionItemsSchema = Joi.object({
+  pfaCode: Joi.string().required(),
+  batchId: Joi.string().required(),
+});
+
+const listContributionItems = async (req, res, next) => {
+  try {
+    await listContributionItemsSchema.validateAsync(req.body, {
+      abortEarly: true,
+    });
+    next();
+  } catch (err) {
+    console.log("listContributionItemsValidator", err.message);
+    return res.status(400).json({
+      message: err.message,
+      errorCode: "V400",
+    });
+  }
+};
+
 module.exports = {
   walletPayment,
+  listBatchContributions,
+  listContributionItems,
 };

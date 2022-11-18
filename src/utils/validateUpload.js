@@ -70,17 +70,30 @@ const validateUploads = async (payload) => {
       ) {
         console.log(val, typeof val);
         // if the PFA is invalid
-        errorMsg += `${key} is invalid `;
+        errorMsg += `${key} is invalid. `;
         isValid = false;
         continue;
       }
 
       // TODO: API validate otther columns
-
       valHolder[requiredFields[key].slug] = val;
-
-      row["STATUS"] = errorMsg;
     }
+
+    // make sure the individual contributions sum up to total
+    const total = [
+      Number(valHolder["employeeVoluntaryContribution"]),
+      Number(valHolder["employeeNormalContribution"]),
+      Number(valHolder["employerVoluntaryContribution"]),
+      Number(valHolder["employerNormalContribution"]),
+    ].reduce((a, b) => a + b, 0);
+
+    if (total != valHolder["amount"]) {
+      errorMsg += "Sum of Contributions is not equal to the TOTAL AMOUNT. ";
+      isValid = false;
+    }
+
+    row["STATUS"] = errorMsg;
+
     outputData.push(valHolder);
   });
 

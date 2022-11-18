@@ -230,6 +230,87 @@ const updateProcessedScheduleItem = async (invoiceNo) => {
   );
 };
 
+const getProcessedItemsPfc = async ({
+  invoiceNo,
+  agentId,
+  itemCode,
+  companyCode,
+  month,
+  year,
+  paymentType,
+}) => {
+  const findObj = { invoiceNo, deleted: false, paid: 1 };
+
+  return ProcessedScheduleItem.aggregate([
+    {
+      $match: findObj,
+    },
+    {
+      $lookup: {
+        from: "uploadschedules", // collection name in db
+        localField: "id",
+        foreignField: "_id",
+        as: "item",
+      },
+    },
+    {
+      $set: {
+        item: {
+          $arrayElemAt: ["$item", 0],
+        },
+      },
+    },
+    {
+      $lookup: {
+        from: "pfas", // collection name in db
+        localField: "item.pfaCode",
+        foreignField: "pfaCode",
+        as: "pfa",
+      },
+    },
+    {
+      $set: {
+        pfa: {
+          $arrayElemAt: ["$pfa", 0],
+        },
+      },
+    },
+    {
+      $lookup: {
+        from: "pfcs", // collection name in db
+        localField: "pfa.pfc",
+        foreignField: "_id",
+        as: "pfc",
+      },
+    },
+    {
+      $set: {
+        pfc: {
+          $arrayElemAt: ["$pfc", 0],
+        },
+      },
+    },
+    {
+      $project: {
+        pfcId: "$pfc._id",
+        pfaCode: "$pfa.pfaCode",
+        scheduleId: "$item._id",
+      },
+    },
+    {
+      $addFields: {
+        itemCode: itemCode,
+        companyCode: companyCode,
+        agentId: agentId,
+        month: month,
+        year: year,
+        paymentType: paymentType,
+        batchId: invoiceNo,
+      },
+    },
+  ]);
+};
+
 module.exports = {
   addProcessedSchedule,
   checkProcessedSchedule,
@@ -242,4 +323,5 @@ module.exports = {
   updateProcessedScheduleItem,
   updatePaidProcessedScheduleItem,
   getNotPaidProcessedSchedule,
+  getProcessedItemsPfc,
 };

@@ -1,12 +1,8 @@
 const moment = require("moment");
-const QRCode = require("qrcode");
 const UploadSchedule = require("../data/uploadSchedule");
 const ProcessedSchedule = require("../data/processedSchedule");
-const User = require("../data/user");
 const Item = require("../data/item");
 const Wallet = require("../data/wallet");
-const MakeEmailTemplate = require("../utils/makeEmailTemplate");
-const { sendMail } = require("../utils/notification");
 
 const {
   BadRequestError,
@@ -79,7 +75,18 @@ const walletPayment = async (req, res, next) => {
       });
     }
 
-    // TODO: Notify the PFAs
+    // Log the contributions for the Pfcs and Pfas
+    const contributions = await ProcessedSchedule.getProcessedItemsPfc({
+      invoiceNo,
+      agentId,
+      itemCode: ScheduleDetail.itemCode,
+      companyCode,
+      month: ScheduleDetail.month,
+      year: ScheduleDetail.year,
+      paymentType: "wallet",
+    });
+
+    await Item.addContributions(contributions);
 
     return res.status(200).json({
       message: "Wallet Payment successful",
