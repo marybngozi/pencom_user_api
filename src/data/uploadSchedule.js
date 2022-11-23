@@ -4,6 +4,7 @@ const { UploadSchedule } = require("../models/uploadSchedule");
 const { UploadTask } = require("../models/uploadTask");
 const { Pfa } = require("../models/pfa");
 const { Pfc } = require("../models/pfc");
+const PAGESIZE = 10;
 
 const addSchedules = async (schedules) => {
   return await UploadSchedule.create(schedules);
@@ -125,7 +126,7 @@ const aggregateSumGroup = async (data) => {
     },
     {
       $group: {
-        _id: { $month: "$createdAt" },
+        _id: "$month",
         count: { $count: {} },
         amount: { $sum: "$amount" },
         employeeNormalContribution: { $sum: "$employeeNormalContribution" },
@@ -211,6 +212,18 @@ const bulkDelete = async (arr) => {
   return await bulk.execute();
 };
 
+const deleteBatch = async (uploadBatchId) => {
+  return UploadSchedule.updateOne(
+    {
+      uploadBatchId,
+    },
+    {
+      deleted: true,
+      deletedAt: new Date(),
+    }
+  );
+};
+
 const getScheduleId = async (id) => {
   return await UploadSchedule.findById(id);
 };
@@ -249,7 +262,49 @@ const getUnpaidUploadBatch = async ({
   ]);
 };
 
-const getUnpaidUploads = async (uploadBatchId) => {
+const getUnpaidUploads = async (uploadBatchId, { page = 1 }) => {
+  const reqObj = {
+    deleted: false,
+    paid: 0,
+    processedStatus: 0,
+    uploadBatchId: uploadBatchId,
+  };
+
+  const skip = (Number(page) - 1) * PAGESIZE;
+
+  return await UploadSchedule.aggregate([
+    { $match: reqObj },
+    {
+      $lookup: {
+        from: "pfas", // collection name in db
+        localField: "pfaCode",
+        foreignField: "pfaCode",
+        as: "pfa",
+      },
+    },
+    {
+      $set: {
+        pfa: {
+          $arrayElemAt: ["$pfa", 0],
+        },
+      },
+    },
+    {
+      $facet: {
+        metadata: [{ $count: "total" }, { $addFields: { page: page } }],
+        data: [{ $skip: skip }, { $limit: PAGESIZE }],
+      },
+    },
+    {
+      $project: {
+        data: 1,
+        meta: { $arrayElemAt: ["$metadata", 0] },
+      },
+    },
+  ]);
+};
+
+const getUnpaidUploadsExcel = async (uploadBatchId) => {
   const reqObj = {
     deleted: false,
     paid: 0,
@@ -266,6 +321,16 @@ const getUnpaidUploads = async (uploadBatchId) => {
         foreignField: "pfaCode",
         as: "pfa",
       },
+    },
+    {
+      $set: {
+        pfa: {
+          $arrayElemAt: ["$pfa", 0],
+        },
+      },
+    },
+    {
+      $sort: { "pfa.pfaName": 1 },
     },
   ]);
 };
@@ -288,6 +353,7 @@ const processSumCount = async ({
   month,
   year,
   processedStatus,
+  items = false,
 }) => {
   const reqObj = {
     paid: 0,
@@ -302,38 +368,36 @@ const processSumCount = async ({
     reqObj["processedStatus"] = processedStatus;
   }
 
-  const upload = await UploadSchedule.find(
+  if (!items) {
+    return UploadSchedule.aggregate([
+      { $match: reqObj },
+      {
+        $group: {
+          _id: "$pfaCode",
+          count: { $count: {} },
+          amount: { $sum: "$amount" },
+          employeeNormalContribution: { $sum: "$employeeNormalContribution" },
+          employerNormalContribution: { $sum: "$employerNormalContribution" },
+          employeeVoluntaryContribution: {
+            $sum: "$employeeVoluntaryContribution",
+          },
+          employerVoluntaryContribution: {
+            $sum: "$employerVoluntaryContribution",
+          },
+        },
+      },
+    ]);
+  }
+
+  return UploadSchedule.find(
     {
       ...reqObj,
     },
     {
-      uploadType: 0,
-      updatedAt: 0,
-      deletedAt: 0,
-      dateProcessed: 0,
+      id: 1,
+      amount: 1,
     }
   );
-
-  const sumed = await UploadSchedule.aggregate([
-    { $match: reqObj },
-    {
-      $group: {
-        _id: "$pfaCode",
-        count: { $count: {} },
-        amount: { $sum: "$amount" },
-        employeeNormalContribution: { $sum: "$employeeNormalContribution" },
-        employerNormalContribution: { $sum: "$employerNormalContribution" },
-        employeeVoluntaryContribution: {
-          $sum: "$employeeVoluntaryContribution",
-        },
-        employerVoluntaryContribution: {
-          $sum: "$employerVoluntaryContribution",
-        },
-      },
-    },
-  ]);
-
-  return { upload, sumed };
 };
 
 const processSumCountMandate = async (invoiceNo) => {
@@ -628,7 +692,7 @@ const getTransactions = async (rsaPin) => {
 };
 
 const processSumCountItems = async (invoiceNo) => {
-  // group processed item by pfcs and sub group by pfas
+  // group, sum and count processed item by pfcs and sub group by pfas for excel download
   const items = await ProcessedScheduleItem.aggregate([
     {
       $match: {
@@ -657,23 +721,8 @@ const processSumCountItems = async (invoiceNo) => {
         schedule: {
           $arrayElemAt: ["$schedule", 0],
         },
-        month: {
-          $arrayElemAt: ["$invoice.month", 0],
-        },
-        invoiceAmount: {
-          $arrayElemAt: ["$invoice.amount", 0],
-        },
-        year: {
-          $arrayElemAt: ["$invoice.year", 0],
-        },
-        invoiceNo: {
-          $arrayElemAt: ["$invoice.invoiceNo", 0],
-        },
-        paymentStatus: {
-          $arrayElemAt: ["$invoice.paymentStatus", 0],
-        },
-        companyCode: {
-          $arrayElemAt: ["$invoice.companyCode", 0],
+        invoice: {
+          $arrayElemAt: ["$invoice", 0],
         },
       },
     },
@@ -708,31 +757,82 @@ const processSumCountItems = async (invoiceNo) => {
       },
     },
     {
-      $project: {
-        pfc: "$pfc.pfcName",
-        pfa: "$pfa.pfaName",
-        pfcId: "$pfc._id",
-        pfaCode: "$pfa.pfaCode",
-        staffId: "$schedule.staffId",
-        rsaPin: "$schedule.rsaPin",
-        amount: "$schedule.amount",
-        firstName: "$schedule.firstName",
-        lastName: "$schedule.lastName",
-        employeeNormalContribution: "$schedule.employeeNormalContribution",
-        employerNormalContribution: "$schedule.employerNormalContribution",
-        employeeVoluntaryContribution:
-          "$schedule.employeeVoluntaryContribution",
-        employerVoluntaryContribution:
-          "$schedule.employerVoluntaryContribution",
-        month: "$schedule.month",
-        year: "$schedule.year",
-        paid: "$schedule.paid",
+      $group: {
+        _id: {
+          pfcId: "$pfc._id",
+          pfaCode: "$pfa.pfaCode",
+        },
+        pfcName: {
+          $first: "$pfc.pfcName",
+        },
+        pfaName: {
+          $first: "$pfa.pfaName",
+        },
+        count: {
+          $count: {},
+        },
+        amount: {
+          $sum: "$schedule.amount",
+        },
+        employeeNormalContribution: {
+          $sum: "$schedule.employeeNormalContribution",
+        },
+        employerNormalContribution: {
+          $sum: "$schedule.employerNormalContribution",
+        },
+        employeeVoluntaryContribution: {
+          $sum: "$schedule.employeeVoluntaryContribution",
+        },
+        employerVoluntaryContribution: {
+          $sum: "$schedule.employerVoluntaryContribution",
+        },
+        schedules: {
+          $push: "$schedule",
+        },
+      },
+    },
+    {
+      $group: {
+        _id: "$_id.pfcId",
+        pfcName: {
+          $first: "$pfcName",
+        },
+        count: {
+          $count: {},
+        },
+        amount: {
+          $sum: "$amount",
+        },
+        employeeNormalContribution: {
+          $sum: "$employeeNormalContribution",
+        },
+        employerNormalContribution: {
+          $sum: "$employerNormalContribution",
+        },
+        employeeVoluntaryContribution: {
+          $sum: "$employeeVoluntaryContribution",
+        },
+        employerVoluntaryContribution: {
+          $sum: "$employerVoluntaryContribution",
+        },
+        pfas: {
+          $push: {
+            pfaName: "$pfaName",
+            pfaCode: "$_id.pfaCode",
+            count: "$count",
+            amount: "$amount",
+            employeeNormalContribution: "$employeeNormalContribution",
+            employerNormalContribution: "$employerNormalContribution",
+            employeeVoluntaryContribution: "$employeeVoluntaryContribution",
+            employerVoluntaryContribution: "$employerVoluntaryContribution",
+            schedules: "$schedules",
+          },
+        },
       },
     },
     {
       $sort: {
-        pfc: 1,
-        pfa: 1,
+        pfcName: 1,
       },
     },
   ]);
@@ -745,6 +845,7 @@ module.exports = {
   aggregateAndCount,
   aggregateSumGroup,
   bulkDelete,
+  deleteBatch,
   getScheduleId,
   getUnpaidUploadBatch,
   getUnpaidUploads,
@@ -762,4 +863,5 @@ module.exports = {
   processSumCountItems,
   aggregateAndCountPfa,
   aggregateSumGroupPfa,
+  getUnpaidUploadsExcel,
 };

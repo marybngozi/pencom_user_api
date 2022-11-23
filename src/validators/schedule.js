@@ -17,6 +17,25 @@ const deleteSchedule = async (req, res, next) => {
   }
 };
 
+const deleteScheduleBatchSchema = Joi.object({
+  uploadBatchId: Joi.string().required(),
+});
+
+const deleteScheduleBatch = async (req, res, next) => {
+  try {
+    await deleteScheduleBatchSchema.validateAsync(req.body, {
+      abortEarly: true,
+    });
+    next();
+  } catch (err) {
+    console.error("deleteScheduleBatchValidator", err.message);
+    return res.status(400).json({
+      message: err.message,
+      errorCode: "V400",
+    });
+  }
+};
+
 const listScheduleSchema = Joi.object({
   itemCode: Joi.string().required(),
   dateStart: Joi.any(),
@@ -84,7 +103,7 @@ const processScheduleSchema = Joi.object({
     month: Joi.string().required(),
     year: Joi.number().required(),
   }),
-  payData: Joi.array().items(Joi.object()),
+  // payData: Joi.array().items(Joi.object()),
 });
 
 const processSchedule = async (req, res, next) => {
@@ -158,6 +177,7 @@ const getContribution = async (req, res, next) => {
 
 module.exports = {
   deleteSchedule,
+  deleteScheduleBatch,
   listSchedule,
   summarizeSchedule,
   processSchedule,

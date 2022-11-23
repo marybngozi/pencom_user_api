@@ -24,6 +24,14 @@ module.exports = () => {
     accountValidate,
     scheduleController.getBatchSchedule
   );
+  // delete schedule by batchID
+  api.post(
+    "/delete-batch",
+    authenticate,
+    accountValidate,
+    validator.deleteScheduleBatch,
+    scheduleController.deleteScheduleBatch
+  );
   // delete schedule
   api.post(
     "/remove",
@@ -121,6 +129,13 @@ module.exports = () => {
     authenticate,
     validator.listProcessedScheduleItem,
     scheduleController.getPaymentDetails
+  );
+  // download uploaded schedule items
+  api.post(
+    "/download-uploaded-items",
+    authenticate,
+    validator.deleteScheduleBatch, // uses same body type
+    scheduleController.downloadUploadedItems
   );
   // download processed items
   api.post(

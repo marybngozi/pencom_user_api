@@ -96,16 +96,14 @@ const getBatchSchedule = async (req, res, next) => {
 
     if (!uploadBatchId) throw new BadRequestError("Batch Id was not provided");
 
-    const uploads = await UploadSchedule.getUnpaidUploads(uploadBatchId);
+    const uploads = await UploadSchedule.getUnpaidUploads(
+      uploadBatchId,
+      req.query
+    );
 
     return res.status(200).json({
       message: "Items fetched successfully",
-      data: uploads,
-      meta: {
-        currentPage: 1,
-        pageSize: 1,
-        pageTotal: 1,
-      },
+      ...uploads[0],
     });
   } catch (e) {
     console.log("scheduleController-getBatchSchedule", e);
@@ -139,13 +137,40 @@ const deleteSchedule = async (req, res, next) => {
   }
 };
 
+const deleteScheduleBatch = async (req, res, next) => {
+  try {
+    // Get the token parameters
+    let { agentId } = req.user;
+    let { uploadBatchId } = req.body;
+
+    // Bulk delete action
+    const deletedSchedule = await UploadSchedule.deleteBatch(uploadBatchId);
+
+    console.log(deletedSchedule);
+
+    if (nModified != deleteArr.length)
+      throw new BadRequestError("Deletion not successful");
+
+    return res.status(200).json({
+      message: "Delete successful",
+      meta: {
+        currentPage: 1,
+        pageSize: 1,
+        pageTotal: 1,
+      },
+    });
+  } catch (e) {
+    cconsole.log("scheduleController-deleteScheduleBatch", e);
+    next(e);
+  }
+};
+
 const summarizeSchedule = async (req, res, next) => {
   try {
     // Get the token parameters
     let { agentId, userType, companyCode } = req.user;
     let { itemCode, month, year } = req.body;
 
-    let uploads = [];
     let theCountsMain = {};
 
     // get all pfas and their pfc details
@@ -155,7 +180,7 @@ const summarizeSchedule = async (req, res, next) => {
     let findObj = { month, year, itemCode, companyCode, processedStatus: 0 };
 
     // Get the total for all pfas for the given month and year
-    let { upload, sumed } = await UploadSchedule.processSumCount(findObj);
+    let sumed = await UploadSchedule.processSumCount(findObj);
 
     if (sumed.length) {
       for (let i = 0; i < sumed.length; i++) {
@@ -173,8 +198,6 @@ const summarizeSchedule = async (req, res, next) => {
 
         theCountsMain[valPfa.pfc.pfcName].push(sumed[i]);
       }
-
-      uploads.push(...upload);
     }
 
     return res.status(200).json({
@@ -184,12 +207,6 @@ const summarizeSchedule = async (req, res, next) => {
         year,
         itemCode,
         summary: theCountsMain,
-        data: uploads,
-      },
-      meta: {
-        currentPage: 1,
-        pageSize: 1,
-        pageTotal: 1,
       },
     });
   } catch (e) {
@@ -354,7 +371,7 @@ const processSchedule = async (req, res, next) => {
     let { agentId, companyName, companyCode, email } = req.user;
 
     // declaring all variables
-    let { payDetails, payData } = req.body;
+    let { payDetails } = req.body;
 
     const paymentBooked = await ProcessedSchedule.checkProcessedSchedule({
       agentId,
@@ -365,7 +382,7 @@ const processSchedule = async (req, res, next) => {
     });
 
     if (paymentBooked)
-      throw new BadRequestError("Payment already booked before");
+      throw new BadRequestError("Payment with same data already booked before");
 
     // add payDetails to Processed Schedule table
     const processed = await ProcessedSchedule.addProcessedSchedule({
@@ -376,6 +393,19 @@ const processSchedule = async (req, res, next) => {
       year: payDetails.year,
       itemCode: payDetails.itemCode,
     });
+
+    // get the payData
+    let findObj = {
+      month: payDetails.month,
+      year: payDetails.year,
+      itemCode: payDetails.itemCode,
+      companyCode,
+      processedStatus: 0,
+      items: true,
+    };
+
+    // Get the payData for the given month and year
+    const payData = await UploadSchedule.processSumCount(findObj);
 
     // make new data array having {id, invoiceNo, amount}
     const dataArr = payData.map((obj) => {
@@ -484,18 +514,16 @@ const listProcessedScheduleItem = async (req, res, next) => {
     let { companyCode } = req.user;
     let { invoiceNo } = req.body;
 
-    const remitItems = await ProcessedSchedule.getAllProcessedScheduleItems({
-      invoiceNo,
-    });
+    const remitItems = await ProcessedSchedule.getAllProcessedScheduleItems(
+      {
+        invoiceNo,
+      },
+      req.query
+    );
 
     return res.status(200).json({
       message: "Processed Schedule items fetched successfully",
-      data: remitItems,
-      meta: {
-        currentPage: 1,
-        pageSize: 1,
-        pageTotal: 1,
-      },
+      ...remitItems[0],
     });
   } catch (e) {
     console.log("scheduleController-listProcessedScheduleItem", e);
@@ -602,7 +630,6 @@ const getContribution = async (req, res, next) => {
     let { rsaPin } = req.user;
     // get the processed remittance using the custReference
     const transactions = await UploadSchedule.getTransactions(rsaPin);
-    console.log({ transactions });
 
     return res.status(200).json({
       message: "Contributions details fetched successfully",
@@ -619,6 +646,7 @@ const getContribution = async (req, res, next) => {
   }
 };
 
+// total, group and list to build the download
 const downloadProcessedItems = async (req, res, next) => {
   try {
     // Get the token parameters
@@ -628,36 +656,123 @@ const downloadProcessedItems = async (req, res, next) => {
 
     if (!uploadItems.length) throw new BadRequestError("No item found");
 
+    //emptyItemRow
+    const eIR = {
+      PFC: null,
+      PFA: null,
+      "STAFF ID": null,
+      "RSA PIN": null,
+      AMOUNT: null,
+      "STAFF NAME": null,
+      "EMPLOYEE NORMAL CONTRIBUTION": null,
+      "EMPLOYER NORMAL CONTRIBUTION": null,
+      "EMPLOYEE VOLUNTARY CONTRIBUTION": null,
+      "EMPLOYER VOLUNTARY CONTRIBUTION": null,
+      MONTH: null,
+      YEAR: null,
+    };
+
+    const excelData = [];
+    const grandTotal = {
+      PFC: "GRAND TOTAL",
+      AMOUNT: 0,
+      "EMPLOYEE NORMAL CONTRIBUTION": 0,
+      "EMPLOYER NORMAL CONTRIBUTION": 0,
+      "EMPLOYEE VOLUNTARY CONTRIBUTION": 0,
+      "EMPLOYER VOLUNTARY CONTRIBUTION": 0,
+    };
+
     // format data
-    uploadItems.forEach((item, i) => {
-      const newItem = {
-        MONTH: moment()
-          .set("month", Number(item.month) - 1)
-          .format("MMMM"),
-        YEAR: item.year,
-        PFC: item.pfc,
-        PFA: item.pfa,
-        "PFA CODE": item.pfaCode,
-        "STAFF ID": item.staffId,
-        "RSA PIN": item.rsaPin,
-        AMOUNT: item.amount,
-        "FIRST NAME": item.firstName,
-        "LAST NAME": item.lastName,
-        "EMPLOYEE NORMAL CONTRIBUTION": item.employeeNormalContribution,
-        "EMPLOYER NORMAL CONTRIBUTION": item.employerNormalContribution,
-        "EMPLOYEE VOLUNTARY CONTRIBUTION": item.employeeVoluntaryContribution,
-        "EMPLOYER VOLUNTARY CONTRIBUTION": item.employerVoluntaryContribution,
-        paid: item.paid == 1 ? "Paid" : "Not Paid",
-      };
-      uploadItems[i] = newItem;
-    });
+    for (const pfc of uploadItems) {
+      eIR["PFC"] = pfc.pfcName;
+      excelData.push({ ...eIR });
+      eIR["PFC"] = null;
+
+      // add pfas
+      for (const pfa of pfc.pfas) {
+        eIR["PFA"] = pfa.pfaName;
+        excelData.push({ ...eIR });
+        eIR["PFA"] = null;
+
+        // add schedules
+        for (const item of pfa.schedules) {
+          eIR["STAFF ID"] = item.staffId;
+          eIR["RSA PIN"] = item.rsaPin;
+          eIR["AMOUNT"] = item.amount;
+          eIR["STAFF NAME"] = item.firstName + " " + item.lastName;
+          eIR["EMPLOYER NORMAL CONTRIBUTION"] = item.employerNormalContribution;
+          eIR["EMPLOYEE NORMAL CONTRIBUTION"] = item.employeeNormalContribution;
+          eIR["EMPLOYEE VOLUNTARY CONTRIBUTION"] =
+            item.employeeVoluntaryContribution;
+          eIR["EMPLOYER VOLUNTARY CONTRIBUTION"] =
+            item.employerVoluntaryContribution;
+          eIR["MONTH"] = moment()
+            .set("month", Number(item.month) - 1)
+            .format("MMMM");
+          eIR["YEAR"] = item.year;
+
+          excelData.push({ ...eIR });
+
+          // clear the template data
+          Object.keys(eIR).forEach((key) => {
+            eIR[key] = null;
+          });
+        }
+
+        // add the pfa totals
+        eIR["PFA"] = "TOTAL";
+        eIR["AMOUNT"] = pfa.amount;
+        eIR["EMPLOYER NORMAL CONTRIBUTION"] = pfa.employerNormalContribution;
+        eIR["EMPLOYEE NORMAL CONTRIBUTION"] = pfa.employeeNormalContribution;
+        eIR["EMPLOYEE VOLUNTARY CONTRIBUTION"] =
+          pfa.employeeVoluntaryContribution;
+        eIR["EMPLOYER VOLUNTARY CONTRIBUTION"] =
+          pfa.employerVoluntaryContribution;
+
+        excelData.push({ ...eIR });
+
+        // clear the template data
+        Object.keys(eIR).forEach((key) => {
+          eIR[key] = null;
+        });
+      }
+
+      // add the pfc totals
+      eIR["PFC"] = "TOTAL";
+      eIR["AMOUNT"] = pfc.amount;
+      eIR["EMPLOYER NORMAL CONTRIBUTION"] = pfc.employerNormalContribution;
+      eIR["EMPLOYEE NORMAL CONTRIBUTION"] = pfc.employeeNormalContribution;
+      eIR["EMPLOYEE VOLUNTARY CONTRIBUTION"] =
+        pfc.employeeVoluntaryContribution;
+      eIR["EMPLOYER VOLUNTARY CONTRIBUTION"] =
+        pfc.employerVoluntaryContribution;
+
+      excelData.push({ ...eIR });
+
+      // clear the template data
+      Object.keys(eIR).forEach((key) => {
+        eIR[key] = null;
+      });
+      // add totals to grand total
+      grandTotal["AMOUNT"] += pfc.amount;
+      grandTotal["EMPLOYER NORMAL CONTRIBUTION"] +=
+        pfc.employerNormalContribution;
+      grandTotal["EMPLOYEE NORMAL CONTRIBUTION"] +=
+        pfc.employeeNormalContribution;
+      grandTotal["EMPLOYEE VOLUNTARY CONTRIBUTION"] +=
+        pfc.employeeVoluntaryContribution;
+      grandTotal["EMPLOYER VOLUNTARY CONTRIBUTION"] +=
+        pfc.employerVoluntaryContribution;
+    }
+
+    excelData.push(grandTotal);
 
     const fileName = `${Date.now()}-processed_schedule.xlsx`;
     const filePath = path.join(
       __basedir + "/public/uploads/schedule",
       fileName
     );
-    await createExcel(uploadItems, filePath);
+    await createExcel(excelData, filePath);
 
     console.log("scheduleController.downloadProcessedItems: started");
     const file = fs.createReadStream(filePath);
@@ -685,9 +800,76 @@ const downloadProcessedItems = async (req, res, next) => {
   }
 };
 
+const downloadUploadedItems = async (req, res, next) => {
+  try {
+    // Get the token parameters
+    let { uploadBatchId } = req.body;
+
+    const uploadItems = await UploadSchedule.getUnpaidUploadsExcel(
+      uploadBatchId
+    );
+
+    if (!uploadItems.length) throw new BadRequestError("No item found");
+
+    // format data
+    uploadItems.forEach((item, i) => {
+      const newItem = {
+        MONTH: moment()
+          .set("month", Number(item.month) - 1)
+          .format("MMMM"),
+        YEAR: item.year,
+        PFA: item.pfa.pfaName,
+        "PFA CODE": item.pfaCode,
+        "STAFF ID": item.staffId,
+        "RSA PIN": item.rsaPin,
+        AMOUNT: item.amount,
+        "FIRST NAME": item.firstName,
+        "LAST NAME": item.lastName,
+        "EMPLOYEE NORMAL CONTRIBUTION": item.employeeNormalContribution,
+        "EMPLOYER NORMAL CONTRIBUTION": item.employerNormalContribution,
+        "EMPLOYEE VOLUNTARY CONTRIBUTION": item.employeeVoluntaryContribution,
+        "EMPLOYER VOLUNTARY CONTRIBUTION": item.employerVoluntaryContribution,
+      };
+      uploadItems[i] = newItem;
+    });
+
+    const fileName = `${Date.now()}-uploaded_schedule.xlsx`;
+    const filePath = path.join(
+      __basedir + "/public/uploads/schedule",
+      fileName
+    );
+    await createExcel(uploadItems, filePath);
+
+    console.log("scheduleController.downloadUploadedItems: started");
+    const file = fs.createReadStream(filePath);
+
+    // deletes the file after download
+    file.on("end", () => {
+      fs.unlink(filePath, () => {
+        console.log(
+          `scheduleController.downloadUploadedItems: file ${filePath} deleted`
+        );
+      });
+    });
+
+    let filename = filePath.split("-").pop();
+    filename = filename.split(".")[0];
+
+    res.setHeader(
+      "Content-Disposition",
+      'attachment: filename="' + filename + '"'
+    );
+    file.pipe(res);
+  } catch (e) {
+    console.log("scheduleController-downloadUploadedItems", e);
+    next(e);
+  }
+};
+
 module.exports = {
   listSchedule,
   deleteSchedule,
+  deleteScheduleBatch,
   summarizeSchedule,
   processSchedule,
   uploadScheduleExcel,
@@ -702,4 +884,5 @@ module.exports = {
   getBatchSchedule,
   getContribution,
   downloadProcessedItems,
+  downloadUploadedItems,
 };

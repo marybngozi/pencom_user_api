@@ -2,6 +2,7 @@ const { User } = require("../models/user");
 const { MainMenu } = require("../models/mainMenu");
 const { SubMenu } = require("../models/subMenu");
 const { UserMenu } = require("../models/userMenu");
+const userMenu = require("../models/userMenu");
 
 const getMenuCS = async (userType) => {
   const findObj = {
@@ -28,12 +29,10 @@ const getMenuCS = async (userType) => {
     let subMenus = await SubMenu.find(
       { ...findObj, menuId: menu.id },
       {
-        createdAt: 0,
-        updatedAt: 0,
-        updatedAt: 0,
-        deleted: 0,
-        menuType: 0,
-        menuId: 0,
+        path: 1,
+        name: 1,
+        id: 1,
+        menuType: 1,
       }
     );
 
@@ -42,6 +41,7 @@ const getMenuCS = async (userType) => {
     menus.push({
       name: menu.name,
       icon: menu.icon,
+      id: menu.id,
       subMenus: subMenus,
     });
   }
@@ -50,7 +50,21 @@ const getMenuCS = async (userType) => {
 };
 
 const getMenuAdminStaff = async (agentId, companyCode) => {
+  /* gets and builds the menu for login */
   let menus = [];
+
+  const baseSubMenus = await SubMenu.find(
+    {
+      deleted: false,
+      menuType: "adminStaff",
+    },
+    {
+      id: 1,
+      menuId: 1,
+      name: 1,
+      path: 1,
+    }
+  );
 
   const userMenus = await UserMenu.find(
     {
@@ -59,15 +73,16 @@ const getMenuAdminStaff = async (agentId, companyCode) => {
       companyCode,
     },
     {
-      createdAt: 0,
-      updatedAt: 0,
-      updatedAt: 0,
-      deleted: 0,
-      userId: 0,
+      menus: 1,
     }
-  ).populate("menuId");
+  ).populate("menus");
 
-  if (!userMenus.length) return menus;
+  let allUserMenus = [...baseSubMenus];
+  if (userMenus.length) {
+    const userSubMenus = userMenus.menus;
+    allUserMenus.push(...userSubMenus);
+  }
+  if (!allUserMenus.length) return menus;
 
   const mainMenus = await MainMenu.find({
     deleted: false,
@@ -77,7 +92,7 @@ const getMenuAdminStaff = async (agentId, companyCode) => {
 
   for (let i = 0; i < mainMenus.length; i++) {
     const menu = mainMenus[i];
-    let subMenus = userMenus.filter((sub) => menu.id == sub.menuId.menuId);
+    let subMenus = allUserMenus.filter((sub) => menu.id == sub.menuId);
 
     if (!subMenus.length) continue;
 
@@ -92,26 +107,85 @@ const getMenuAdminStaff = async (agentId, companyCode) => {
 };
 
 const getMenuAdminStaffOnly = async (agentId, companyCode) => {
-  const userMenus = await UserMenu.find(
+  // gets only the menus list for further assigning
+  const userMenus = await UserMenu.findOne(
     {
       deleted: false,
       userId: agentId,
       companyCode,
     },
     {
-      createdAt: 0,
-      updatedAt: 0,
-      updatedAt: 0,
-      deleted: 0,
-      userId: 0,
+      menus: 1,
     }
-  ).populate("menuId");
+  );
 
-  return userMenus;
+  return userMenus ? userMenus.menus : [];
+};
+
+const createBaseAdminStaffMenu = async ({ userId, companyCode }) => {
+  // check if there is an existing menu for that staff for that company
+  const menuExists = await UserMenu.findOne({
+    userId,
+    companyCode,
+  });
+
+  if (menuExists) return;
+
+  const baseSubMenus = await SubMenu.find(
+    {
+      deleted: false,
+      menuType: "adminStaff",
+    },
+    {
+      id: 1,
+    }
+  );
+
+  if (!baseSubMenus.length) return;
+
+  const baseMenuids = baseSubMenus.map((baseMenu) => baseMenu.id);
+
+  // create the base menu
+  const staffMenu = new UserMenu({
+    userId,
+    companyCode,
+    menus: baseMenuids,
+  });
+  await staffMenu.save();
+};
+
+const addStaffAdminMenu = async ({ userId, companyCode, subMenuIds }) => {
+  // check if there is an existing menu for that staff for that company
+  const menuExists = await UserMenu.findOne({
+    userId,
+    companyCode,
+  });
+
+  if (!menuExists) {
+    // create the base menu
+    const staffMenu = new UserMenu({
+      userId,
+      companyCode,
+      menus: subMenuIds,
+    });
+    return await staffMenu.save();
+  }
+
+  return await UserMenu.updateOne(
+    {
+      companyCode,
+      userId,
+    },
+    {
+      menus: subMenuIds,
+    }
+  );
 };
 
 module.exports = {
   getMenuCS,
   getMenuAdminStaff,
   getMenuAdminStaffOnly,
+  addStaffAdminMenu,
+  createBaseAdminStaffMenu,
 };

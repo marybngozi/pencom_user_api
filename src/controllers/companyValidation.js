@@ -2,6 +2,7 @@ const moment = require("moment");
 const User = require("../data/user");
 const CompanyValidation = require("../data/companyValidation");
 const Wallet = require("../data/wallet");
+const Menu = require("../data/menu");
 const MakeEmailTemplate = require("../utils/makeEmailTemplate");
 const { sendMail, sendSms } = require("../utils/notification");
 const { hideEmail, hidePhone } = require("../utils/helpers");
@@ -18,7 +19,7 @@ const validationNotification = async (token, email, phone, companyName) => {
     stateName: companyName,
     year: moment().format("YYYY"),
   };
-  let subject = "Comapny code Validation";
+  let subject = "Company code Validation";
 
   // make email message from template
   let emailMessage = MakeEmailTemplate("companyCodeValidation.html", emailData);
@@ -72,7 +73,9 @@ const makeAdminStaff = async (req, res, next) => {
 
     // ifuser is not verified
     if (!staff.accountVerified)
-      throw new BadRequestError("Staff account is not verified");
+      throw new BadRequestError(
+        "Staff account is not verified. Staff shoule verify their email first!"
+      );
 
     // add user to staff admin record
     const adminStaff = await CompanyValidation.createAdminStaff({
@@ -86,6 +89,9 @@ const makeAdminStaff = async (req, res, next) => {
 
     // update user to staffAdmin
     const newUser = await User.updateDetails(staff.id, { userType: 300 });
+
+    /* // add the base menu for the staff
+    await Menu.createBaseAdminStaffMenu({ userId: staff.id, companyCode }); */
 
     return res.status(201).json({
       message: `${staff.firstName} ${staff.lastName} has been added as an Admin staff for company`,

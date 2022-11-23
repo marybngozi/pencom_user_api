@@ -2,8 +2,8 @@ const { Router } = require("express");
 
 const api = Router();
 const dashboardController = require("../controllers/dashboard");
-const validator = require("../validators/dashboard");
 const menuController = require("../controllers/menu");
+const validator = require("../validators/dashboard");
 const { authenticate } = require("../middlewares");
 
 module.exports = () => {
@@ -27,6 +27,13 @@ module.exports = () => {
     authenticate,
     validator.getStaffMenus,
     menuController.getStaffMenus
+  );
+  // update staff menus
+  api.post(
+    "/update-staff-menus",
+    authenticate,
+    validator.updateStaffMenu,
+    menuController.updateStaffMenu
   );
 
   return api;

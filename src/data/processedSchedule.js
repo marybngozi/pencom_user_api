@@ -1,6 +1,7 @@
 const mongoose = require("mongoose");
 const { ProcessedSchedule } = require("../models/processedSchedule");
 const { ProcessedScheduleItem } = require("../models/processedScheduleItem");
+const PAGESIZE = 10;
 
 const generateInvoiceNo = async () => {
   let invoiceNo = Math.floor(Math.random() * 1000000000000);
@@ -111,20 +112,18 @@ const getAllProcessedSchedule = async (findObj) => {
   ).sort({ amount: "asc" });
 };
 
-const getAllProcessedScheduleItems = async ({ invoiceNo, paid }) => {
+const getAllProcessedScheduleItems = async (
+  { invoiceNo, paid },
+  { page = 1 }
+) => {
   const findObj = { invoiceNo, deleted: false };
 
   if (paid || paid === 0) {
     findObj["paid"] = paid;
   }
 
-  // return ProcessedScheduleItem.find(findObj, {
-  //   updatedAt: 0,
-  //   deletedAt: 0,
-  //   deleted: false,
-  // })
-  //   .sort({ amount: "asc" })
-  //   .populate("id");
+  const skip = (Number(page) - 1) * PAGESIZE;
+
   return ProcessedScheduleItem.aggregate([
     {
       $match: findObj,
@@ -172,6 +171,18 @@ const getAllProcessedScheduleItems = async ({ invoiceNo, paid }) => {
         pfc: {
           $arrayElemAt: ["$pfc", 0],
         },
+      },
+    },
+    {
+      $facet: {
+        metadata: [{ $count: "total" }, { $addFields: { page: page } }],
+        data: [{ $skip: skip }, { $limit: PAGESIZE }],
+      },
+    },
+    {
+      $project: {
+        data: 1,
+        meta: { $arrayElemAt: ["$metadata", 0] },
       },
     },
   ]);

@@ -46,12 +46,14 @@ const documentSchema = new Schema(
     timestamps: true,
     toObject: {
       transform(doc, ret) {
+        ret.id = ret._id;
         delete ret._id;
         delete ret.__v;
       },
     },
     toJSON: {
       transform(doc, ret) {
+        ret.id = ret._id;
         delete ret._id;
         delete ret.__v;
       },

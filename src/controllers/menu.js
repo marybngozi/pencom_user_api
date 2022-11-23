@@ -42,7 +42,7 @@ const getStaffMenus = async (req, res, next) => {
     // if the user was not found
     if (!staff) throw new NotFoundError("Staff with RSA PIN was not found");
 
-    const menus = await Menu.getMenuAdminStaffOnly(staff.agentId, companyCode);
+    const menus = await Menu.getMenuAdminStaffOnly(staff.id, companyCode);
 
     return res.status(200).json({
       message: "Staff Menus fetched successfully",
@@ -59,7 +59,31 @@ const getStaffMenus = async (req, res, next) => {
   }
 };
 
+const updateStaffMenu = async (req, res, next) => {
+  try {
+    // Get the token parameters
+    let { companyCode } = req.user;
+
+    let { userId, subMenuIds } = req.body;
+
+    await Menu.addStaffAdminMenu({ userId, companyCode, subMenuIds });
+
+    return res.status(200).json({
+      message: "Staff Menus updated successfully",
+      meta: {
+        currentPage: 1,
+        pageSize: 1,
+        pageTotal: 1,
+      },
+    });
+  } catch (e) {
+    console.log("menuController-updateStaffMenu", e);
+    next(e);
+  }
+};
+
 module.exports = {
   getMenus,
   getStaffMenus,
+  updateStaffMenu,
 };

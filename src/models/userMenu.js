@@ -5,18 +5,22 @@ const Schema = mongoose.Schema;
 const documentSchema = new Schema(
   {
     userId: {
-      type: String,
+      type: Schema.Types.ObjectId,
+      ref: "User",
       required: true,
     },
     companyCode: {
       type: String,
       required: true,
     },
-    menuId: {
-      type: Schema.Types.ObjectId,
-      ref: "SubMenu",
-      required: true,
-    },
+    menus: [
+      {
+        type: Schema.Types.ObjectId,
+        ref: "SubMenu",
+        required: true,
+        unique: true,
+      },
+    ],
     createdAt: {
       type: Date,
       required: true,

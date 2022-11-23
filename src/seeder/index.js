@@ -12,18 +12,18 @@ const data = [
   //   model: "User",
   //   documents: PfcUsers,
   // },
-  // {
-  //   model: "Pfc",
-  //   documents: Pfcs,
-  // },
+  {
+    model: "Pfc",
+    documents: Pfcs,
+  },
   // {
   //   model: "State",
   //   documents: States,
   // },
-  // {
-  //   model: "Pfa",
-  //   documents: Pfas,
-  // },
+  {
+    model: "Pfa",
+    documents: Pfas,
+  },
   // {
   //   model: "Item",
   //   documents: Items,
@@ -43,9 +43,9 @@ seeder.connect(config.MONGODB_URI, () => {
   // Load Mongoose models
   seeder.loadModels([
     // "./src/models/user.js",
-    // "./src/models/pfc.js",
+    "./src/models/pfc.js",
     // "./src/models/state.js",
-    // "./src/models/pfa.js",
+    "./src/models/pfa.js",
     // "./src/models/item.js",
     "./src/models/mainMenu.js",
     "./src/models/subMenu.js",
@@ -53,7 +53,7 @@ seeder.connect(config.MONGODB_URI, () => {
 
   // Clear specified collections
   seeder.clearModels(
-    ["MainMenu", "SubMenu"],
+    ["Pfc", "Pfa", "MainMenu", "SubMenu"],
     // ["Pfc", "State", "Pfa", "Item", "MainMenu", "SubMenu"],
     () => {
       // Callback to populate DB once collections have been cleared

@@ -28,20 +28,6 @@ const PfcUsers = [
     emailVerified: true,
   },
   {
-    _id: "637627ce24d3b8360533f365",
-    companyName: "Access Pension Fund Custodian Limited",
-    password: "12qw!@QW",
-    email: "marybngozi+231@gmail.com",
-    userType: 400,
-    phone: "09038615095",
-    address: "Wuse 2",
-    city: "Abuja",
-    state: "FCT",
-    companyRc: "3236444722",
-    accountVerified: true,
-    emailVerified: true,
-  },
-  {
     _id: "6376278724d3b8360533f364",
     companyName: "Zenith Pensions Custodian Limited",
     password: "12qw!@QW",
@@ -67,11 +53,6 @@ const Pfcs = [
     _id: "63650f1dfcf27d12b5441df3",
     pfcName: "Zenith Pensions Custodian Limited",
     userId: "6376278724d3b8360533f364",
-  },
-  {
-    _id: "63650f30fcf27d12b5441df4",
-    pfcName: "Access Pension Fund Custodian Limited",
-    userId: "637627ce24d3b8360533f365",
   },
   {
     _id: "636cb7126d321279bd156fd4",
