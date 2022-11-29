@@ -13,7 +13,7 @@ const getMenuCS = async (userType) => {
     findObj["menuType"] = "company";
   } else if (userType == 200) {
     findObj["menuType"] = "staff";
-  } else if (userType == 400) {
+  } else if (userType == 400 || userType == 500) {
     findObj["menuType"] = "pfa";
   }
   let menus = [];

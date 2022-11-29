@@ -41,7 +41,8 @@ const listBatchContributions = async (req, res, next) => {
 };
 
 const listContributionItemsSchema = Joi.object({
-  pfaCode: Joi.string().required(),
+  pfaCode: Joi.any(),
+  companyCode: Joi.string().required(),
   batchId: Joi.string().required(),
 });
 

@@ -1,3 +1,20 @@
+const PfaUsers = [
+  {
+    _id: "637627ce24d3b8360533f365",
+    companyName: "AXA MANSARD PENSIONS LIMITED",
+    password: "12qw!@QW",
+    email: "marybngozi+231@gmail.com",
+    userType: 500,
+    phone: "09038615095",
+    address: "Wuse 2",
+    city: "Abuja",
+    state: "FCT",
+    companyRc: "3236444722",
+    accountVerified: true,
+    emailVerified: true,
+  },
+];
+
 const Pfas = [
   {
     pfaName: "STANBIC IBTC PENSION MANAGERS LIMITED",
@@ -68,6 +85,7 @@ const Pfas = [
     pfaName: "AXA MANSARD PENSIONS LIMITED",
     pfaCode: 35,
     pfc: "63650f1dfcf27d12b5441df3",
+    userId: "637627ce24d3b8360533f365",
   },
   {
     pfaName: "IEI-ANCHOR PENSION MANAGERS LIMITED",
@@ -106,4 +124,4 @@ const Pfas = [
   },
 ];
 
-module.exports = Pfas;
+module.exports = { Pfas, PfaUsers };

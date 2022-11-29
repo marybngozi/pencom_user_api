@@ -34,5 +34,21 @@ module.exports = () => {
     pfcController.listContributionItems
   );
 
+  // download contributions for a PFC or PFA as excel
+  api.post(
+    "/download-contributions",
+    authenticate,
+    validator.listContributionItems,
+    pfcController.downloadContributions
+  );
+
+  // transmit contributions from a PFC to PFA
+  api.post(
+    "/transmit-contributions",
+    authenticate,
+    validator.listContributionItems,
+    pfcController.transmitContributions
+  );
+
   return api;
 };

@@ -1,6 +1,8 @@
-const moment = require("moment");
+const fs = require("fs");
+const path = require("path");
 const Item = require("../data/item");
-const { NotFoundError } = require("../utils/errors");
+// const { NotFoundError } = require("../utils/errors");
+const { createExcel } = require("../utils/excel");
 
 const listBatchContributions = async (req, res, next) => {
   try {
@@ -29,9 +31,9 @@ const listBatchContributions = async (req, res, next) => {
       endDate.setDate(endDate.getDate() + 1);
     }
 
-    let findObj = { itemCode, startDate, endDate, userType, agentId };
+    let findObj = { itemCode, startDate, endDate, agentId };
 
-    const contributions = await Item.getBatchContributions(findObj);
+    const contributions = await Item.getBatchContributionsPfc(findObj);
 
     return res.status(200).json({
       message: "Contributions fetched successfully",
@@ -51,19 +53,34 @@ const listBatchContributions = async (req, res, next) => {
 const listContributionItems = async (req, res, next) => {
   try {
     // Get the token parameters
-    let { userType } = req.user;
-    let { pfaCode, batchId } = req.body;
+    let { userType, agentId } = req.user;
+    let { pfaCode, companyCode, batchId } = req.body;
 
-    const contributions = await Item.getContributionItems(pfaCode, batchId);
+    let contributions = [];
+
+    if (pfaCode) {
+      contributions = await Item.getContributionItems(
+        {
+          pfaCode,
+          batchId,
+          companyCode,
+        },
+        req.query
+      );
+    } else {
+      contributions = await Item.getContributionPfas(
+        {
+          batchId,
+          companyCode,
+          agentId,
+        },
+        req.query
+      );
+    }
 
     return res.status(200).json({
-      message: "Cosntribution Items fetched successfully",
-      data: contributions,
-      meta: {
-        currentPage: 1,
-        pageSize: 1,
-        pageTotal: 1,
-      },
+      message: "Contribution Items fetched successfully",
+      ...contributions[0],
     });
   } catch (e) {
     console.log("pfcController-listContributionItems", e);
@@ -71,7 +88,86 @@ const listContributionItems = async (req, res, next) => {
   }
 };
 
+const downloadContributions = async (req, res, next) => {
+  try {
+    // Get the token parameters
+    let { userType, agentId } = req.user;
+    let { pfaCode, companyCode, batchId } = req.body;
+
+    let contributions = [];
+
+    if (pfaCode) {
+      contributions = await Item.buildContributionItem({
+        pfaCode,
+        batchId,
+        companyCode,
+      });
+    } else {
+      contributions = await Item.buildContributionPfas({
+        batchId,
+        companyCode,
+        agentId,
+      });
+    }
+
+    const fileName = `${Date.now()}-pfccontributions.xlsx`;
+    const filePath = path.join(
+      __basedir + "/public/uploads/schedule",
+      fileName
+    );
+    await createExcel(contributions, filePath);
+
+    console.log("pfcController.downloadContributions: started");
+    const file = fs.createReadStream(filePath);
+
+    // deletes the file after download
+    file.on("end", () => {
+      fs.unlink(filePath, () => {
+        console.log(
+          `pfcController.downloadContributions: file ${filePath} deleted`
+        );
+      });
+    });
+
+    let filename = filePath.split("-").pop();
+    filename = filename.split(".")[0];
+
+    res.setHeader(
+      "Content-Disposition",
+      'attachment: filename="' + filename + '"'
+    );
+    file.pipe(res);
+  } catch (e) {
+    console.log("pfcController-downloadContributions", e);
+    next(e);
+  }
+};
+
+const transmitContributions = async (req, res, next) => {
+  try {
+    // Get the token parameters
+    let { userType, agentId } = req.user;
+    let { pfaCode, companyCode, batchId } = req.body;
+
+    const transmitted = await Item.updateTransmit({
+      batchId,
+      companyCode,
+      agentId,
+      pfaCode,
+    });
+
+    return res.status(200).json({
+      message: "Contribution transmitted to PFA successfully",
+    });
+  } catch (e) {
+    console.log("pfcController-transmitContributions", e);
+    next(e);
+  }
+};
+
 module.exports = {
   listBatchContributions,
   listContributionItems,
+  downloadContributions,
+  transmitContributions,
 };

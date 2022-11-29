@@ -184,7 +184,7 @@ const aggregateSumGroupPfa = async (id) => {
     },
     {
       $group: {
-        _id: { $month: "$createdAt" },
+        _id: "$month",
         count: { $count: {} },
         amount: { $sum: "$amount" },
         employeeNormalContribution: { $sum: "$employeeNormalContribution" },
