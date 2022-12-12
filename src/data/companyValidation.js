@@ -142,8 +142,8 @@ const findValidation = async ({ companyCode, agentId, status }) => {
 };
 
 const createToken = async ({ agentId, companyCode, email, phone }) => {
-  // make 4 digits token
-  const token = Math.floor(1000 + Math.random() * 9000);
+  // make 6 digits token
+  const token = Math.floor(100000 + Math.random() * 900000);
 
   // Create an expiry time of 15 minutes
   const expiryTime = Number(moment().add(15, "minutes").format("x"));
@@ -161,7 +161,7 @@ const createToken = async ({ agentId, companyCode, email, phone }) => {
 
 const updateNewToken = async ({ agentId, companyCode }) => {
   // make 4 digits token
-  const newToken = Math.floor(1000 + Math.random() * 9000);
+  const newToken = Math.floor(100000 + Math.random() * 900000);
 
   // Create an expiry time of 15 minutes
   const expiryTime = Number(moment().add(15, "minutes").format("x"));

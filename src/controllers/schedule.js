@@ -220,7 +220,6 @@ const uploadScheduleExcel = async (req, res, next) => {
     // Get the token parameters
     let { agentId, companyCode } = req.user;
     let { itemCode, month, year } = req.body;
-    // console.log(req.body);
 
     if (!itemCode) throw new NotFoundError("Item must be provided");
     if (!month) throw new NotFoundError("Month must be provided");

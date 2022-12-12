@@ -35,6 +35,8 @@ module.exports = () => {
     validator.updateStaffMenu,
     menuController.updateStaffMenu
   );
+  //TODO: update staff menus
+  api.post("/send-email", dashboardController.testTemplates);
 
   return api;
 };

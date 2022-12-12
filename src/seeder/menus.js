@@ -9,7 +9,7 @@ const MainMenus = [
     name: "Schedule",
     icon: "fa fa-suitcase",
   },
-  {
+  /* {
     _id: "636e66ae8c142e6cc9c6b290",
     name: "Profile",
     icon: "fa fa-user",
@@ -18,7 +18,7 @@ const MainMenus = [
     _id: "636e66ae8c142e6cc9c6b291",
     name: "Transactions",
     icon: "fa fa-user",
-  },
+  }, */
 ];
 
 const SubMenus = [
@@ -28,69 +28,43 @@ const SubMenus = [
     menuId: "636b54c977cd215910d2dc67",
   },
   {
-    name: "View Pending Schedule",
+    name: "Uploaded Schedule Status",
     path: "/upload-status",
     menuId: "636b54c977cd215910d2dc67",
   },
   {
-    name: "List Uploaded Schedule",
-    path: "/list-schedule",
-    menuId: "636b54c977cd215910d2dc67",
-  },
-  {
-    name: "Process Schedule",
-    path: "/process-schedule",
-    menuId: "636b54c977cd215910d2dc67",
-  },
-  {
-    name: "View Processed Schedule",
+    name: "Processed Schedules",
     path: "/view-processed",
     menuId: "636b54c977cd215910d2dc67",
   },
   {
-    name: "Validate Code",
-    path: "/validate-company",
+    name: "Sub-Admin Staff",
+    path: "/sub-admin-staff",
     menuId: "636b54c977cd215910d2dc66",
   },
   {
-    name: "Create Admin Staff",
-    path: "/create-staff",
-    menuId: "636b54c977cd215910d2dc66",
-  },
-  {
-    name: "List Admin Staff",
-    path: "/list-staff",
-    menuId: "636b54c977cd215910d2dc66",
-  },
-  {
-    name: "Profile",
-    path: "/view-profile",
+    name: "Transaction",
+    path: "/staff-transaction",
     menuId: "636b54c977cd215910d2dc66",
     menuType: "staff",
   },
   {
-    name: "List Transaction",
-    path: "/list-transaction",
-    menuId: "636e66ae8c142e6cc9c6b291",
-    menuType: "staff",
-  },
-  {
-    name: "View Company",
-    path: "/view-company",
+    name: "Transaction",
+    path: "/pfc-transaction",
     menuId: "636b54c977cd215910d2dc66",
-    menuType: "adminStaff",
+    menuType: "pfc",
   },
   {
-    name: "Create Sub Admin",
-    path: "/create-subadmin",
+    name: "Transaction",
+    path: "/pfa-transaction",
     menuId: "636b54c977cd215910d2dc66",
     menuType: "pfa",
   },
   {
-    name: "View Contribution",
-    path: "/view-contribution",
-    menuId: "636e66ae8c142e6cc9c6b291",
-    menuType: "pfa",
+    name: "PFA Remit",
+    path: "/pfa-remit",
+    menuId: "636b54c977cd215910d2dc66",
+    menuType: "pfc",
   },
 ];
 

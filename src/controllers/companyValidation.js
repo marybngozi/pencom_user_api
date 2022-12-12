@@ -16,13 +16,13 @@ const {
 const validationNotification = async (token, email, phone, companyName) => {
   const emailData = {
     token: token,
-    stateName: companyName,
+    company: companyName,
     year: moment().format("YYYY"),
   };
   let subject = "Company code Validation";
 
   // make email message from template
-  let emailMessage = MakeEmailTemplate("companyCodeValidation.html", emailData);
+  let emailMessage = MakeEmailTemplate("otp.html", emailData);
 
   let smsMessage = `Your Pencom company code validation token is ${token}. Token expires in 10 minutes.`;
 

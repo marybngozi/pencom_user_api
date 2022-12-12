@@ -2,6 +2,8 @@ const moment = require("moment");
 const UploadSchedule = require("../data/uploadSchedule");
 const Item = require("../data/item");
 const { NotFoundError } = require("../utils/errors");
+const MakeEmailTemplate = require("../utils/makeEmailTemplate");
+const { sendMail, validateEmail } = require("../utils/notification");
 
 const countItemMonth = async (req, res, next) => {
   try {
@@ -198,10 +200,36 @@ const sumYearMonths = async (req, res, next) => {
   }
 };
 
+const testTemplates = async (req, res, next) => {
+  try {
+    // send email
+    const email = "umunnawill@gmail.com";
+    const emailData = {
+      year: new Date().getFullYear(),
+    };
+
+    const message = MakeEmailTemplate("paymentPfc.html", emailData);
+
+    const subject = `Welcome to Pencom`;
+
+    // send welcome/verify email tto the user
+    // sendMail(email, message, subject);
+    validateEmail(email);
+
+    return res.status(201).json({
+      message: `testing email has been sent to ${email}`,
+    });
+  } catch (err) {
+    console.log(err);
+    next(err);
+  }
+};
+
 module.exports = {
   getItems,
   countItemMonth,
   countItemYear,
   getStates,
   sumYearMonths,
+  testTemplates,
 };
