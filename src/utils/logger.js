@@ -1,21 +1,79 @@
-const fs = require("fs");
+const winston = require("winston");
+const path = require("path");
 const moment = require("moment");
 
-const file = moment().format("YYYY-MM-DD") + ".log";
+// Define your severity levels.
+const levels = {
+  error: 0,
+  warn: 1,
+  info: 2,
+  http: 3,
+  debug: 4,
+};
 
-async function log(message, type = "INFO") {
-  // Check if the file exists in the current directory, and if it is readable.
-  const checkfile = fs.existsSync("./logs/" + file);
+// Colors make the log message more visible on the console
+const colors = {
+  error: "red",
+  warn: "yellow",
+  info: "green",
+  http: "magenta",
+  debug: "white",
+};
 
-  const time = moment().format("h:mm:ss a");
-  const data = `${type}: ${time}: ${message}`;
-  if (!checkfile) {
-    fs.writeFileSync("./logs/" + file, data);
-  } else {
-    fs.appendFileSync("./logs/" + file, data);
-  }
+// Tell winston that you want to link the colors
+winston.addColors(colors);
+
+// Choose the aspect of your log customizing the file log format.
+const format = winston.format.combine(
+  // Add the message timestamp with the preferred format
+  winston.format.timestamp({ format: "YYYY-MM-DD HH:mm:ss:ms" }),
+  // Tell Winston that the logs must be colored
+  // winston.format.colorize({ all: true }),
+  // Define the format of the message showing the timestamp, the level and the message
+  winston.format.printf(
+    (info) => `${info.timestamp} ${info.level}: ${info.message}`
+  )
+);
+
+// Choose the aspect of your log customizing the console log format.
+const consoleFormat = winston.format.combine(
+  // Add the message timestamp with the preferred format
+  winston.format.timestamp({ format: "YYYY-MM-DD HH:mm:ss:ms" }),
+  // Tell Winston that the logs must be colored
+  winston.format.colorize({ all: true }),
+  // Define the format of the message showing the timestamp, the level and the message
+  winston.format.printf(
+    (info) => `${info.timestamp} ${info.level}: ${info.message}`
+  )
+);
+
+// file name for the log
+const logName = moment().format("DD_MMM_YYYY");
+
+// Define which transports the logger must use to print out messages.
+const transports = [
+  // Allow to print all the logs in the <day>.log file
+  new winston.transports.File({
+    filename: path.join(__dirname, `../../logs/${logName}.log`),
+  }),
+];
+
+// Create the logger instance that has to be exported and used to log messages.
+const logger = winston.createLogger({
+  level: "http",
+  levels,
+  format,
+  transports,
+});
+
+// log to the console on development
+if (process.env.NODE_ENV !== "production") {
+  logger.add(
+    new winston.transports.Console({
+      format: consoleFormat,
+      level: "debug",
+    })
+  );
 }
 
-module.exports = {
-  log,
-};
+module.exports = logger;

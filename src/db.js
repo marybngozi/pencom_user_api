@@ -1,5 +1,6 @@
 const mongoose = require("mongoose");
 const config = require("./config");
+const logger = require("./utils/logger");
 
 module.exports = () => {
   const mongoURI = config.MONGODB_URI;
@@ -14,22 +15,22 @@ module.exports = () => {
   const db = mongoose.connect(mongoURI, options);
 
   mongoose.connection.on("connected", () => {
-    console.log("Mongoose default connection open to " + mongoURI);
+    logger.info("Mongoose default connection open to " + mongoURI);
   });
 
   // If the connection throws an error
   mongoose.connection.on("error", (err) => {
-    console.log("handle mongo errored connections: " + err);
+    logger.error("handle mongo errored connections: " + err);
   });
 
   // When the connection is disconnected
   mongoose.connection.on("disconnected", () => {
-    console.log("Mongoose default connection disconnected");
+    logger.info("Mongoose default connection disconnected");
   });
 
   process.on("SIGINT", () => {
     mongoose.connection.close(() => {
-      console.log("App terminated, closing mongo connections");
+      logger.info("App terminated, closing mongo connections");
       process.exit(0);
     });
   });

@@ -1,3 +1,4 @@
+const logger = require("./logger");
 class BadRequestError extends Error {
   constructor(message, code = "E400") {
     super();
@@ -68,6 +69,9 @@ class UnAuthorizedAccess extends Error {
 }
 
 const ErrorHandler = (error) => {
+  // log the error first
+  logger.error(JSON.stringify(error));
+
   if (error.name === "MongoError" && error.code === 11000) {
     return {
       errorCode: 400,

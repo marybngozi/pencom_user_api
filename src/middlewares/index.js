@@ -43,7 +43,7 @@ const authenticate = async (req, res, next) => {
     next();
   } catch (e) {
     console.log("middleware-authenticate-error:", e);
-    return res.status(e.errorCode || 500).json(e);
+    next(e);
   }
 };
 
@@ -83,7 +83,7 @@ const accountValidate = async (req, res, next) => {
     next();
   } catch (e) {
     console.log("middleware-accountValidate-error:", e);
-    return res.status(e.errorCode || 500).json(e);
+    next(e);
   }
 };
 

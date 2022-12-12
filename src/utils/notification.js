@@ -1,5 +1,6 @@
 const axios = require("axios");
 const config = require("../config");
+const logger = require("./logger");
 const { ServerError } = require("../utils/errors");
 
 const sendMail = async (email, message, subject) => {
@@ -21,24 +22,24 @@ const sendMail = async (email, message, subject) => {
       apikey: config.EMAIL_API_KEY,
       Accept: "application/json",
       "Content-Type": "application/json",
-      // Cookie: "PHPSESSID=okdbrvc94sn22cvltlcvv36u1k",
     },
     data: data,
   };
 
   try {
     const emailSend = await axios(emailConfig);
-
-    console.log(JSON.stringify(emailSend.data));
+    delete emailSend.data.Message;
 
     // check if email was sent successfully
     if (emailSend.data.Code == "02") {
+      logger.info("Sending email => " + JSON.stringify(emailSend.data));
       return true;
     } else {
+      logger.error("Sending email => " + JSON.stringify(emailSend.data));
       return false;
     }
   } catch (error) {
-    console.log(error);
+    logger.error("Sending email => " + JSON.stringify(error));
   }
 };
 
@@ -63,17 +64,18 @@ const sendSms = async (phone, message) => {
 
   try {
     const smsSend = await axios(smsConfig);
-
-    console.log(JSON.stringify(smsSend.data));
+    delete smsSend.data.Message;
 
     // check if sms was sent successfully
     if (smsSend.data.StatusCode == "101") {
+      logger.info("Sending sms => " + JSON.stringify(smsSend.data));
       return true;
     } else {
+      logger.error("Sending sms => " + JSON.stringify(smsSend.data));
       return false;
     }
   } catch (error) {
-    console.log(error);
+    logger.error("Sending sms => " + JSON.stringify(error));
   }
 };
 
@@ -96,12 +98,20 @@ const validateEmail = async (email) => {
 
     const response = await axios(validateConfig);
 
-    console.log(response.data);
     if (response) {
+      if (response.data.is_valid) {
+        logger.info(
+          `Validating email => ${email}: ${JSON.stringify(response.data)}`
+        );
+      } else {
+        logger.error(
+          `Validating email => ${email}: ${JSON.stringify(response.data)}`
+        );
+      }
       return response.data;
     }
+    return { is_valid: false };
   } catch (error) {
-    console.log(error);
     throw new ServerError();
   }
 };
