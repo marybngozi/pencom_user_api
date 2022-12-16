@@ -79,6 +79,13 @@ const ErrorHandler = (error) => {
     };
   }
 
+  if (error.name === "MulterError" && error.code === "LIMIT_FILE_SIZE") {
+    return {
+      errorCode: 400,
+      message: "File size is bigger than the required 3MB",
+    };
+  }
+
   if (error.name === "ValidationError") {
     const message = [];
     for (const key in error.errors) {

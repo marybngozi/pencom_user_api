@@ -9,6 +9,7 @@ const User = require("../data/user");
 const Item = require("../data/item");
 const Wallet = require("../data/wallet");
 const { parseExcel, createExcel } = require("../utils/excel");
+const logger = require("../utils/logger");
 const { validateUploads } = require("../utils/validateUpload");
 const MakeEmailTemplate = require("../utils/makeEmailTemplate");
 const { sendMail } = require("../utils/notification");
@@ -83,7 +84,7 @@ const listSchedule = async (req, res, next) => {
       },
     });
   } catch (e) {
-    console.log("scheduleController-listSchedule", e);
+    logger.error(JSON.stringify({ "scheduleController-listSchedule": e }));
     next(e);
   }
 };
@@ -106,7 +107,7 @@ const getBatchSchedule = async (req, res, next) => {
       ...uploads[0],
     });
   } catch (e) {
-    console.log("scheduleController-getBatchSchedule", e);
+    logger.error(JSON.stringify({ "scheduleController-getBatchSchedule": e }));
     next(e);
   }
 };
@@ -132,7 +133,7 @@ const deleteSchedule = async (req, res, next) => {
       },
     });
   } catch (e) {
-    cconsole.log("scheduleController-deleteSchedule", e);
+    logger.error(JSON.stringify({ "scheduleController-deleteSchedule": e }));
     next(e);
   }
 };
@@ -146,8 +147,6 @@ const deleteScheduleBatch = async (req, res, next) => {
     // Bulk delete action
     const deletedSchedule = await UploadSchedule.deleteBatch(uploadBatchId);
 
-    console.log(deletedSchedule);
-
     if (nModified != deleteArr.length)
       throw new BadRequestError("Deletion not successful");
 
@@ -160,7 +159,9 @@ const deleteScheduleBatch = async (req, res, next) => {
       },
     });
   } catch (e) {
-    cconsole.log("scheduleController-deleteScheduleBatch", e);
+    logger.error(
+      JSON.stringify({ "scheduleController-deleteScheduleBatch": e })
+    );
     next(e);
   }
 };
@@ -210,7 +211,7 @@ const summarizeSchedule = async (req, res, next) => {
       },
     });
   } catch (e) {
-    console.log("scheduleController-summarizeSchedule", e);
+    logger.error(JSON.stringify({ "scheduleController-summarizeSchedule": e }));
     next(e);
   }
 };
@@ -258,7 +259,9 @@ const uploadScheduleExcel = async (req, res, next) => {
       },
     });
   } catch (e) {
-    console.log("scheduleController-uploadScheduleExcel", e);
+    logger.error(
+      JSON.stringify({ "scheduleController-uploadScheduleExcel": e })
+    );
     next(e);
   }
 };
@@ -270,7 +273,7 @@ const downloadExcel = async (req, res, next) => {
 
     if (!filePath) throw new BadRequestError("File name must be provided");
 
-    console.log("scheduleController.downloadExcel: started");
+    logger.info("scheduleController.downloadExcel: started");
     const file = fs.createReadStream(filePath);
     let filename = filePath.split("-").pop();
     filename = filename.split(".")[0];
@@ -281,7 +284,7 @@ const downloadExcel = async (req, res, next) => {
     );
     file.pipe(res);
   } catch (e) {
-    console.log("scheduleController-downloadExcel", e);
+    logger.error(JSON.stringify({ "scheduleController-downloadExcel": e }));
     next(e);
   }
 };
@@ -303,7 +306,7 @@ const scheduleStatus = async (req, res, next) => {
       },
     });
   } catch (e) {
-    console.log("scheduleController-scheduleStatus", e);
+    logger.error(JSON.stringify({ "scheduleController-scheduleStatus": e }));
     next(e);
   }
 };
@@ -325,7 +328,7 @@ const removeTask = async (req, res, next) => {
       },
     });
   } catch (e) {
-    console.log("scheduleController-scheduleStatus", e);
+    logger.error(JSON.stringify({ "scheduleController-scheduleStatus": e }));
     next(e);
   }
 };
@@ -335,7 +338,7 @@ const uploadSchedule = async (req, res, next) => {
     // Get the token parameters
     let { agentId } = req.user;
 
-    let { id } = req.body;
+    let { id, scheduleUrl } = req.body;
 
     const task = await UploadSchedule.getTask(id);
 
@@ -350,16 +353,33 @@ const uploadSchedule = async (req, res, next) => {
     // delete the task
     await UploadSchedule.deleteTask(id);
 
-    return res.status(200).json({
-      message: "Schedule uploaded successfully",
-      meta: {
-        currentPage: 1,
-        pageSize: 1,
-        pageTotal: 1,
-      },
-    });
+    // get the schedule total
+    const scheduleTotal = scheduleUpload.reduce((acc, obj) => {
+      return acc + obj.amount;
+    }, 0);
+
+    console.log(scheduleTotal);
+
+    req.body.payDetails = {
+      amount: scheduleTotal,
+      itemCode: task.itemCode,
+      scheduleUrl: scheduleUrl,
+      month: task.month,
+      year: task.year,
+    };
+
+    next();
+
+    // return res.status(200).json({
+    //   message: "Schedule uploaded successfully",
+    //   meta: {
+    //     currentPage: 1,
+    //     pageSize: 1,
+    //     pageTotal: 1,
+    //   },
+    // });
   } catch (e) {
-    console.log("scheduleController-scheduleStatus", e);
+    logger.error(JSON.stringify({ "scheduleController-scheduleStatus": e }));
     next(e);
   }
 };
@@ -454,7 +474,7 @@ const processSchedule = async (req, res, next) => {
     sendMail(email, message, subject);
 
     return res.status(200).json({
-      message: "Payment Booked Successful",
+      message: "Payment Processed Successful",
       data: processed.invoiceNo,
       meta: {
         currentPage: 1,
@@ -463,7 +483,7 @@ const processSchedule = async (req, res, next) => {
       },
     });
   } catch (e) {
-    console.log("scheduleController-processSchedule", e);
+    logger.error(JSON.stringify({ "scheduleController-processSchedule": e }));
     next(e);
   }
 };
@@ -502,7 +522,9 @@ const listProcessedSchedule = async (req, res, next) => {
       },
     });
   } catch (e) {
-    console.log("scheduleController-listProcessedSchedule", e);
+    logger.error(
+      JSON.stringify({ "scheduleController-listProcessedSchedule": e })
+    );
     next(e);
   }
 };
@@ -525,7 +547,9 @@ const listProcessedScheduleItem = async (req, res, next) => {
       ...remitItems[0],
     });
   } catch (e) {
-    console.log("scheduleController-listProcessedScheduleItem", e);
+    logger.error(
+      JSON.stringify({ "scheduleController-listProcessedScheduleItem": e })
+    );
     next(e);
   }
 };
@@ -567,7 +591,7 @@ const getMandate = async (req, res, next) => {
       },
     });
   } catch (e) {
-    console.log("scheduleController-getMandate", e);
+    logger.error(JSON.stringify({ "scheduleController-getMandate": e }));
     next(e);
   }
 };
@@ -618,7 +642,7 @@ const getPaymentDetails = async (req, res, next) => {
       },
     });
   } catch (e) {
-    console.log("scheduleController-getMandate", e);
+    logger.error(JSON.stringify({ "scheduleController-getMandate": e }));
     next(e);
   }
 };
@@ -640,7 +664,7 @@ const getContribution = async (req, res, next) => {
       },
     });
   } catch (e) {
-    console.log("scheduleController-getMandate", e);
+    logger.error(JSON.stringify({ "scheduleController-getMandate": e }));
     next(e);
   }
 };
@@ -719,7 +743,7 @@ const downloadProcessedItems = async (req, res, next) => {
         }
 
         // add the pfa totals
-        eIR["PFA"] = "TOTAL";
+        eIR["PFA"] = "PFA TOTAL";
         eIR["AMOUNT"] = pfa.amount;
         eIR["EMPLOYER NORMAL CONTRIBUTION"] = pfa.employerNormalContribution;
         eIR["EMPLOYEE NORMAL CONTRIBUTION"] = pfa.employeeNormalContribution;
@@ -737,7 +761,7 @@ const downloadProcessedItems = async (req, res, next) => {
       }
 
       // add the pfc totals
-      eIR["PFC"] = "TOTAL";
+      eIR["PFC"] = "PFC TOTAL";
       eIR["AMOUNT"] = pfc.amount;
       eIR["EMPLOYER NORMAL CONTRIBUTION"] = pfc.employerNormalContribution;
       eIR["EMPLOYEE NORMAL CONTRIBUTION"] = pfc.employeeNormalContribution;
@@ -773,13 +797,13 @@ const downloadProcessedItems = async (req, res, next) => {
     );
     await createExcel(excelData, filePath);
 
-    console.log("scheduleController.downloadProcessedItems: started");
+    logger.info("scheduleController.downloadProcessedItems: started");
     const file = fs.createReadStream(filePath);
 
     // deletes the file after download
     file.on("end", () => {
       fs.unlink(filePath, () => {
-        console.log(
+        logger.info(
           `scheduleController.downloadProcessedItems: file ${filePath} deleted`
         );
       });
@@ -794,7 +818,9 @@ const downloadProcessedItems = async (req, res, next) => {
     );
     file.pipe(res);
   } catch (e) {
-    console.log("scheduleController-downloadProcessedItems", e);
+    logger.error(
+      JSON.stringify({ "scheduleController-downloadProcessedItems": e })
+    );
     next(e);
   }
 };
@@ -839,13 +865,13 @@ const downloadUploadedItems = async (req, res, next) => {
     );
     await createExcel(uploadItems, filePath);
 
-    console.log("scheduleController.downloadUploadedItems: started");
+    logger.info("scheduleController.downloadUploadedItems: started");
     const file = fs.createReadStream(filePath);
 
     // deletes the file after download
     file.on("end", () => {
       fs.unlink(filePath, () => {
-        console.log(
+        logger.info(
           `scheduleController.downloadUploadedItems: file ${filePath} deleted`
         );
       });
@@ -860,7 +886,9 @@ const downloadUploadedItems = async (req, res, next) => {
     );
     file.pipe(res);
   } catch (e) {
-    console.log("scheduleController-downloadUploadedItems", e);
+    logger.error(
+      JSON.stringify({ "scheduleController-downloadUploadedItems": e })
+    );
     next(e);
   }
 };

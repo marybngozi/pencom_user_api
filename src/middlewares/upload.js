@@ -1,4 +1,6 @@
 const multer = require("multer");
+const logger = require("../utils/logger");
+const { BadRequestError } = require("../utils/errors");
 
 const excelFilter = (req, file, cb) => {
   if (
@@ -7,7 +9,7 @@ const excelFilter = (req, file, cb) => {
   ) {
     cb(null, true);
   } else {
-    cb("Please upload only excel file.", false);
+    cb(new BadRequestError("Please upload only excel file"));
   }
 };
 
@@ -16,7 +18,7 @@ const uploadStorage = multer.diskStorage({
     cb(null, __basedir + "/public/uploads/schedule");
   },
   filename: (req, file, cb) => {
-    console.log("Multer excel storage middleware", file.originalname);
+    logger.info("Multer excel storage middleware", file.originalname);
     cb(null, `${Date.now()}-${file.originalname}`);
   },
 });

@@ -2,67 +2,63 @@ const MainMenus = [
   {
     _id: "636b54c977cd215910d2dc66",
     name: "Account",
+    slug: "account",
     icon: "fa fa-user",
   },
   {
     _id: "636b54c977cd215910d2dc67",
     name: "Schedule",
+    slug: "schedule",
     icon: "fa fa-suitcase",
   },
-  /* {
-    _id: "636e66ae8c142e6cc9c6b290",
-    name: "Profile",
-    icon: "fa fa-user",
-  },
-  {
-    _id: "636e66ae8c142e6cc9c6b291",
-    name: "Transactions",
-    icon: "fa fa-user",
-  }, */
 ];
 
 const SubMenus = [
   {
     name: "Upload Schedule",
-    path: "/upload-schedule",
+    path: "/schedule/upload",
     menuId: "636b54c977cd215910d2dc67",
+    menuType: "company",
   },
   {
     name: "Uploaded Schedule Status",
-    path: "/upload-status",
+    path: "/schedule/upload-status",
     menuId: "636b54c977cd215910d2dc67",
+    menuType: "company",
   },
   {
     name: "Processed Schedules",
-    path: "/view-processed",
+    path: "/schedule/view-processed",
     menuId: "636b54c977cd215910d2dc67",
+    menuType: "company",
   },
   {
     name: "Sub-Admin Staff",
-    path: "/sub-admin-staff",
+    path: "/account/list-staff",
     menuId: "636b54c977cd215910d2dc66",
+    menuType: "company",
   },
   {
     name: "Transaction",
-    path: "/staff-transaction",
+    path: "/account/staff-transaction",
     menuId: "636b54c977cd215910d2dc66",
     menuType: "staff",
   },
   {
     name: "Transaction",
-    path: "/pfc-transaction",
+    path: "/account/pfc-transaction",
     menuId: "636b54c977cd215910d2dc66",
     menuType: "pfc",
   },
   {
     name: "Transaction",
-    path: "/pfa-transaction",
+    path: "/account/pfa-transaction",
     menuId: "636b54c977cd215910d2dc66",
     menuType: "pfa",
   },
   {
     name: "PFA Remit",
-    path: "/pfa-remit",
+    path: "/account/pfa-remit",
     menuId: "636b54c977cd215910d2dc66",
     menuType: "pfc",
   },

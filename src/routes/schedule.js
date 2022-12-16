@@ -49,13 +49,13 @@ module.exports = () => {
     scheduleController.summarizeSchedule
   );
   // process schedule
-  api.post(
+  /* api.post(
     "/process",
     authenticate,
     accountValidate,
     validator.processSchedule,
     scheduleController.processSchedule
-  );
+  ); */
   // upload Excel schedule
   api.post(
     "/upload-excel",
@@ -85,7 +85,8 @@ module.exports = () => {
     authenticate,
     accountValidate,
     validator.uploadSchedule,
-    scheduleController.uploadSchedule
+    scheduleController.uploadSchedule,
+    scheduleController.processSchedule
   );
   // get processed schedules
   api.post(
@@ -115,13 +116,6 @@ module.exports = () => {
     authenticate,
     validator.getContribution,
     scheduleController.getContribution
-  );
-  // get payment details
-  api.get(
-    "/payment/:invoiceNo",
-    authenticate,
-    validator.listProcessedScheduleItem,
-    scheduleController.getPaymentDetails
   );
   // get payment details
   api.get(

@@ -4,7 +4,7 @@ const { SubMenu } = require("../models/subMenu");
 const { UserMenu } = require("../models/userMenu");
 const userMenu = require("../models/userMenu");
 
-const getMenuCS = async (userType) => {
+const getUsersMenu = async (userType) => {
   const findObj = {
     deleted: false,
   };
@@ -13,40 +13,44 @@ const getMenuCS = async (userType) => {
     findObj["menuType"] = "company";
   } else if (userType == 200) {
     findObj["menuType"] = "staff";
-  } else if (userType == 400 || userType == 500) {
+  } else if (userType == 400) {
+    findObj["menuType"] = "pfc";
+  } else if (userType == 500) {
     findObj["menuType"] = "pfa";
   }
-  let menus = [];
+  let menus = {
+    mainMenus: [],
+    subMenus: [],
+  };
 
-  const mainMenus = await MainMenu.find({
+  let mainMenus = await MainMenu.find({
     deleted: false,
   });
 
   if (!mainMenus.length) return menus;
 
-  for (let i = 0; i < mainMenus.length; i++) {
-    const menu = mainMenus[i];
-    let subMenus = await SubMenu.find(
-      { ...findObj, menuId: menu.id },
-      {
-        path: 1,
-        name: 1,
-        id: 1,
-        menuType: 1,
-      }
-    );
+  const subMenus = await SubMenu.find(
+    { ...findObj },
+    {
+      path: 1,
+      name: 1,
+      id: 1,
+      menuType: 1,
+      menuId: 1,
+    }
+  );
 
-    if (!subMenus.length) continue;
+  if (!subMenus.length) return menus;
 
-    menus.push({
-      name: menu.name,
-      icon: menu.icon,
-      id: menu.id,
-      subMenus: subMenus,
-    });
-  }
+  const userMainMenusIds = subMenus.map((subMenu) => subMenu.menuId);
+  mainMenus = mainMenus.filter((menu) => userMainMenusIds.indexOf(menu.id) < 0);
 
-  return menus;
+  if (!mainMenus.length) return menus;
+
+  return {
+    mainMenus,
+    subMenus,
+  };
 };
 
 const getMenuAdminStaff = async (agentId, companyCode) => {
@@ -183,7 +187,7 @@ const addStaffAdminMenu = async ({ userId, companyCode, subMenuIds }) => {
 };
 
 module.exports = {
-  getMenuCS,
+  getUsersMenu,
   getMenuAdminStaff,
   getMenuAdminStaffOnly,
   addStaffAdminMenu,

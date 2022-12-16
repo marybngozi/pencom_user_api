@@ -15,7 +15,7 @@ const getMenus = async (req, res, next) => {
       userType == 400 ||
       userType == 500
     ) {
-      menus = await Menu.getMenuCS(userType);
+      menus = await Menu.getUsersMenu(userType);
     }
 
     if (userType == 300) {

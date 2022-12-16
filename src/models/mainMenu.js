@@ -6,11 +6,15 @@ const documentSchema = new Schema(
   {
     name: {
       type: String,
-      required: false,
+      required: true,
     },
     icon: {
       type: String,
       required: false,
+    },
+    slug: {
+      type: String,
+      required: true,
     },
     createdAt: {
       type: Date,

@@ -21,20 +21,21 @@ const authenticate = async (req, res, next) => {
       req.body.token ||
       req.query.token; // Express headers are auto converted to lowercase
 
-    if (!token) throw new UnAuthorizedAccess("Auth token is not supplied");
+    if (!token)
+      throw new UnAuthorizedAccess("Auth token is not supplied", "N403");
 
     if (token.startsWith("Bearer ")) token = token.replace("Bearer", "").trim(); // Remove Bearer from string
 
     const userId = jwt.verify(token);
 
     if (!userId) {
-      throw new UnAuthorizedAccess("Token not valid");
+      throw new UnAuthorizedAccess("Token not valid", "N403");
     }
 
     let user = await User.getUserById(userId);
 
     if (!user) {
-      throw new UnAuthorizedAccess("Access denied");
+      throw new UnAuthorizedAccess("Access denied", "N403");
     }
 
     user.agentId = userId;

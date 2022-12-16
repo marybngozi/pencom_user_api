@@ -121,6 +121,7 @@ const processSchedule = async (req, res, next) => {
 
 const uploadScheduleSchema = Joi.object({
   id: Joi.string().required(),
+  scheduleUrl: Joi.string().uri().required(),
 });
 
 const uploadSchedule = async (req, res, next) => {
