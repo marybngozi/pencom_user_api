@@ -25,7 +25,7 @@ const getUsersMenu = async (userType) => {
 
   let mainMenus = await MainMenu.find({
     deleted: false,
-  });
+  }).sort({ pindex: 1 });
 
   if (!mainMenus.length) return menus;
 
@@ -38,7 +38,7 @@ const getUsersMenu = async (userType) => {
       menuType: 1,
       menuId: 1,
     }
-  );
+  ).sort({ pindex: 1 });
 
   if (!subMenus.length) return menus;
 

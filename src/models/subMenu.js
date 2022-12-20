@@ -20,8 +20,12 @@ const documentSchema = new Schema(
     },
     menuType: {
       type: String,
-      enum: ["company", "staff", "adminStaff", "pfc", "pfa"],
+      enum: ["all", "company", "staff", "adminStaff", "pfc", "pfa"],
       default: "company",
+      required: true,
+    },
+    pindex: {
+      type: Number,
       required: true,
     },
     createdAt: {

@@ -16,6 +16,10 @@ const documentSchema = new Schema(
       type: String,
       required: true,
     },
+    pindex: {
+      type: Number,
+      required: true,
+    },
     createdAt: {
       type: Date,
       required: true,
