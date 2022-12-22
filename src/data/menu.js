@@ -9,14 +9,16 @@ const getUsersMenu = async (userType) => {
     deleted: false,
   };
 
+  let menuType = "";
+
   if (userType == 100) {
-    findObj["menuType"] = "company";
+    menuType = "company";
   } else if (userType == 200) {
-    findObj["menuType"] = "staff";
+    menuType = "staff";
   } else if (userType == 400) {
-    findObj["menuType"] = "pfc";
+    menuType = "pfc";
   } else if (userType == 500) {
-    findObj["menuType"] = "pfa";
+    menuType = "pfa";
   }
   let menus = {
     mainMenus: [],
@@ -30,7 +32,7 @@ const getUsersMenu = async (userType) => {
   if (!mainMenus.length) return menus;
 
   const subMenus = await SubMenu.find(
-    { ...findObj },
+    { deleted: false, $or: [{ menuType: menuType }, { menuType: "all" }] },
     {
       path: 1,
       name: 1,
@@ -43,7 +45,14 @@ const getUsersMenu = async (userType) => {
   if (!subMenus.length) return menus;
 
   const userMainMenusIds = subMenus.map((subMenu) => subMenu.menuId);
-  mainMenus = mainMenus.filter((menu) => userMainMenusIds.indexOf(menu.id) < 0);
+
+  // filter the mainMenu
+  mainMenus = mainMenus.filter((menu) => {
+    for (const umiD of userMainMenusIds) {
+      if (umiD.equals(menu.id)) return true;
+      return false;
+    }
+  });
 
   if (!mainMenus.length) return menus;
 
