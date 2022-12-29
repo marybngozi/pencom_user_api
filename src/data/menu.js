@@ -49,8 +49,6 @@ const getUsersMenu = async (userType) => {
   // filter the mainMenu
   mainMenus = mainMenus.filter((menu) => {
     for (const umiD of userMainMenusIds) {
-      console.log(umiD, menu.id);
-      console.log(umiD.equals(menu.id));
       if (umiD.equals(menu.id)) return true;
     }
     return false;
