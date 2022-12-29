@@ -46,7 +46,7 @@ const SubMenus = [
   },
   {
     name: "Sub-Admin Staff",
-    path: "/account/list-staff",
+    path: "/account/company-staff",
     menuId: "636b54c977cd215910d2dc66",
     menuType: "company",
     pindex: 5,
@@ -59,25 +59,32 @@ const SubMenus = [
     pindex: 6,
   },
   {
-    name: "Transaction",
-    path: "/account/pfc-transaction",
+    name: "PFA Remit",
+    path: "/account/pfa-remit",
     menuId: "636b54c977cd215910d2dc66",
     menuType: "pfc",
     pindex: 7,
   },
   {
     name: "Transaction",
-    path: "/account/pfa-transaction",
+    path: "/account/pfc-transaction",
     menuId: "636b54c977cd215910d2dc66",
-    menuType: "pfa",
+    menuType: "pfc",
     pindex: 8,
   },
   {
-    name: "PFA Remit",
-    path: "/account/pfa-remit",
+    name: "Sub-Admin Staff",
+    path: "/account/pfc-staff",
     menuId: "636b54c977cd215910d2dc66",
     menuType: "pfc",
     pindex: 9,
+  },
+  {
+    name: "Transaction",
+    path: "/account/pfa-transaction",
+    menuId: "636b54c977cd215910d2dc66",
+    menuType: "pfa",
+    pindex: 10,
   },
 ];
 
