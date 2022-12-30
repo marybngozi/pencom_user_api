@@ -66,20 +66,31 @@ const getMenuAdminStaff = async (agentId, companyCode) => {
   /* gets and builds the menu for login */
   let menus = [];
 
+  let mainMenus = await MainMenu.find({
+    deleted: false,
+  }).sort({ pindex: 1 });
+
+  if (!mainMenus.length) return menus;
+
   const baseSubMenus = await SubMenu.find(
     {
       deleted: false,
-      menuType: "adminStaff",
+      $or: [
+        { menuType: "staff" },
+        { menuType: "all" },
+        { menuType: "adminStaff" },
+      ],
     },
     {
-      id: 1,
-      menuId: 1,
-      name: 1,
       path: 1,
+      name: 1,
+      id: 1,
+      menuType: 1,
+      menuId: 1,
     }
-  );
+  ).sort({ pindex: 1 });
 
-  const userMenus = await UserMenu.find(
+  const userSubMenus = await UserMenu.find(
     {
       deleted: false,
       userId: agentId,
@@ -90,33 +101,29 @@ const getMenuAdminStaff = async (agentId, companyCode) => {
     }
   ).populate("menus");
 
-  let allUserMenus = [...baseSubMenus];
-  if (userMenus.length) {
-    const userSubMenus = userMenus.menus;
-    allUserMenus.push(...userSubMenus);
+  let allUserSubMenus = [...baseSubMenus];
+  if (userSubMenus.length) {
+    const userSubMenus = userSubMenus.menus;
+    allUserSubMenus.push(...userSubMenus);
   }
-  if (!allUserMenus.length) return menus;
+  if (!allUserSubMenus.length) return menus;
 
-  const mainMenus = await MainMenu.find({
-    deleted: false,
+  const userMainMenusIds = allUserSubMenus.map((subMenu) => subMenu.menuId);
+
+  // filter the mainMenu
+  mainMenus = mainMenus.filter((menu) => {
+    for (const umiD of userMainMenusIds) {
+      if (umiD.equals(menu.id)) return true;
+    }
+    return false;
   });
 
   if (!mainMenus.length) return menus;
 
-  for (let i = 0; i < mainMenus.length; i++) {
-    const menu = mainMenus[i];
-    let subMenus = allUserMenus.filter((sub) => menu.id == sub.menuId);
-
-    if (!subMenus.length) continue;
-
-    menus.push({
-      name: menu.name,
-      icon: menu.icon,
-      subMenus: subMenus,
-    });
-  }
-
-  return menus;
+  return {
+    mainMenus,
+    subMenus: allUserSubMenus,
+  };
 };
 
 const getMenuAdminStaffOnly = async (agentId, companyCode) => {
