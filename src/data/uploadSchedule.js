@@ -1,4 +1,5 @@
 const mongoose = require("mongoose");
+const moment = require("moment");
 const { ProcessedScheduleItem } = require("../models/processedScheduleItem");
 const { UploadSchedule } = require("../models/uploadSchedule");
 const { UploadTask } = require("../models/uploadTask");
@@ -10,18 +11,11 @@ const addSchedules = async (schedules) => {
   return await UploadSchedule.create(schedules);
 };
 
-const aggregateAndCount = async (duration, data) => {
-  const date = new Date();
-  if (duration == "month") {
-    data["month"] = date.getMonth() + 1;
-  }
-  if (duration == "year") {
-    data["year"] = date.getFullYear();
-  }
+const sumAll = async (body) => {
   const sums = await UploadSchedule.aggregate([
     {
       $match: {
-        ...data,
+        ...body,
         deleted: false,
         paid: 1,
       },
@@ -29,176 +23,105 @@ const aggregateAndCount = async (duration, data) => {
     {
       $group: {
         _id: null,
-        count: { $count: {} },
         amount: { $sum: "$amount" },
         employeeNormalContribution: { $sum: "$employeeNormalContribution" },
         employerNormalContribution: { $sum: "$employerNormalContribution" },
-        employeeVoluntaryContribution: {
-          $sum: "$employeeVoluntaryContribution",
-        },
-        employerVoluntaryContribution: {
-          $sum: "$employerVoluntaryContribution",
-        },
       },
     },
   ]);
 
-  return sums;
+  return sums.length
+    ? sums[0]
+    : {
+        amount: 0,
+        employeeNormalContribution: 0,
+        employerNormalContribution: 0,
+      };
 };
 
-const aggregateAndCountPfa = async (duration, id) => {
-  const date = new Date();
-  const data = {
+const countStaff4Month = async (body) => {
+  const sums = await UploadSchedule.distinct("rsaPin", {
     deleted: false,
-    paid: 1,
-  };
-
-  if (duration == "month") {
-    data["month"] = date.getMonth() + 1;
-  }
-  if (duration == "year") {
-    data["year"] = date.getFullYear();
-  }
-
-  // get the pfc that has the userId
-  const pfcx = await Pfc.findOne(
-    {
-      userId: id,
-      deleted: false,
-    },
-    {
-      id: 1,
-    }
-  );
-
-  // get the pfas under the pfc
-  const pfas = await Pfa.find(
-    {
-      pfc: pfcx.id,
-      deleted: false,
-    },
-    {
-      pfaCode: 1,
-    }
-  );
-
-  const pfaCodes = pfas.map((pfa) => {
-    return pfa.pfaCode;
-  });
-
-  const sums = await UploadSchedule.aggregate([
-    {
-      $match: {
-        ...data,
-        pfaCode: { $in: pfaCodes },
-      },
-    },
-    {
-      $group: {
-        _id: null,
-        count: { $count: {} },
-        amount: { $sum: "$amount" },
-        employeeNormalContribution: { $sum: "$employeeNormalContribution" },
-        employerNormalContribution: { $sum: "$employerNormalContribution" },
-        employeeVoluntaryContribution: {
-          $sum: "$employeeVoluntaryContribution",
-        },
-        employerVoluntaryContribution: {
-          $sum: "$employerVoluntaryContribution",
-        },
-      },
-    },
-  ]);
+    ...body,
+  }).count();
 
   return sums;
 };
 
-const aggregateSumGroup = async (data) => {
-  const date = new Date();
+const sumAllByMonth = async (body) => {
+  const series = [
+    {
+      name: "Employer Contribution",
+      data: [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+    },
+    {
+      name: "Employee Contribution",
+      data: [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+    },
+    {
+      name: "Total Contribution",
+      data: [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+    },
+  ];
+
   const sums = await UploadSchedule.aggregate([
     {
       $match: {
-        ...data,
-        paid: 1,
+        ...body,
         deleted: false,
-        year: date.getFullYear(),
+        paid: 1,
       },
     },
     {
       $group: {
         _id: "$month",
-        count: { $count: {} },
         amount: { $sum: "$amount" },
         employeeNormalContribution: { $sum: "$employeeNormalContribution" },
         employerNormalContribution: { $sum: "$employerNormalContribution" },
-        employeeVoluntaryContribution: {
-          $sum: "$employeeVoluntaryContribution",
-        },
-        employerVoluntaryContribution: {
-          $sum: "$employerVoluntaryContribution",
-        },
       },
     },
   ]);
 
-  return sums;
+  /* Build the series */
+  for (const sum of sums) {
+    series[0].data[sum._id - 1] = sum.employerNormalContribution;
+    series[1].data[sum._id - 1] = sum.employeeNormalContribution;
+    series[2].data[sum._id - 1] = sum.amount;
+  }
+
+  return series;
 };
 
-const aggregateSumGroupPfa = async (id) => {
-  const date = new Date();
-
-  // get the pfc that has the userId
-  const pfcx = await Pfc.findOne(
-    {
-      userId: id,
-      deleted: false,
-    },
-    {
-      id: 1,
-    }
-  );
-
-  // get the pfas under the pfc
-  const pfas = await Pfa.find(
-    {
-      pfc: pfcx.id,
-      deleted: false,
-    },
-    {
-      pfaCode: 1,
-    }
-  );
-
-  const pfaCodes = pfas.map((pfa) => {
-    return pfa.pfaCode;
-  });
-
+const sumCountAllByMonth = async (body) => {
   const sums = await UploadSchedule.aggregate([
     {
       $match: {
-        pfaCode: { $in: pfaCodes },
+        ...body,
         paid: 1,
         deleted: false,
-        year: date.getFullYear(),
       },
     },
     {
       $group: {
         _id: "$month",
-        count: { $count: {} },
+        staffCount: { $count: {} },
         amount: { $sum: "$amount" },
-        employeeNormalContribution: { $sum: "$employeeNormalContribution" },
-        employerNormalContribution: { $sum: "$employerNormalContribution" },
-        employeeVoluntaryContribution: {
-          $sum: "$employeeVoluntaryContribution",
-        },
-        employerVoluntaryContribution: {
-          $sum: "$employerVoluntaryContribution",
-        },
+        month: { $max: "$month" },
+        createdAt: { $max: "$createdAt" },
       },
+    },
+    {
+      $sort: { month: 1 },
     },
   ]);
 
+  /* Format the data */
+  for (const sum of sums) {
+    sum.month = moment()
+      .month(sum.month - 1)
+      .format("MMMM");
+    sum.createdAt = moment(sum.createdAt).format("MMM DD. YYYY");
+  }
   return sums;
 };
 
@@ -842,8 +765,9 @@ const processSumCountItems = async (invoiceNo) => {
 
 module.exports = {
   addSchedules,
-  aggregateAndCount,
-  aggregateSumGroup,
+  sumAll,
+  countStaff4Month,
+  sumAllByMonth,
   bulkDelete,
   deleteBatch,
   getScheduleId,
@@ -861,7 +785,6 @@ module.exports = {
   getTransactions,
   processSumCountMandate,
   processSumCountItems,
-  aggregateAndCountPfa,
-  aggregateSumGroupPfa,
+  sumCountAllByMonth,
   getUnpaidUploadsExcel,
 };

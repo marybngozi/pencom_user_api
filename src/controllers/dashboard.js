@@ -5,119 +5,6 @@ const { NotFoundError } = require("../utils/errors");
 const MakeEmailTemplate = require("../utils/makeEmailTemplate");
 const { sendMail, validateEmail } = require("../utils/notification");
 
-const countItemMonth = async (req, res, next) => {
-  try {
-    // Get the token parameters
-    let { id: agentId, userType, companyCode, rsaPin } = req.user;
-
-    let stat = {};
-
-    const findObj = {};
-
-    // for companies and admin staff
-    if ((userType == 100 || userType == 300) && companyCode) {
-      findObj["companyCode"] = companyCode;
-    }
-    // for staff
-    if (userType == 200) {
-      findObj["rsaPin"] = rsaPin;
-      findObj["paid"] = 1;
-    }
-
-    let sums = [];
-
-    if (userType != 400) {
-      sums = await UploadSchedule.aggregateAndCount("month", findObj);
-    } else {
-      sums = await UploadSchedule.aggregateAndCountPfa("month", agentId);
-    }
-
-    console.log(sums);
-
-    if (sums.length > 0) {
-      stat = sums[0];
-    } else {
-      stat = {
-        _id: null,
-        amount: 0,
-        employeeNormalContribution: 0,
-        count: 0,
-        employerNormalContribution: 0,
-        employeeVoluntaryContribution: 0,
-        employerVoluntaryContribution: 0,
-      };
-    }
-
-    return res.status(200).json({
-      message: "Month stat fetched successfully",
-      data: stat,
-      meta: {
-        currentPage: 1,
-        pageSize: 1,
-        pageTotal: 1,
-      },
-    });
-  } catch (e) {
-    console.log("dashboardController-countItemMonth", e);
-    next(e);
-  }
-};
-
-const countItemYear = async (req, res, next) => {
-  try {
-    // Get the token parameters
-    let { id: agentId, userType, rsaPin, companyCode } = req.user;
-
-    let stat = {};
-
-    const findObj = {};
-
-    // for companies and admin staff
-    if ((userType == 100 || userType == 300) && companyCode) {
-      findObj["companyCode"] = companyCode;
-    } else {
-      // for staff
-      findObj["rsaPin"] = rsaPin;
-      findObj["paid"] = 1;
-    }
-
-    let sums = [];
-
-    if (userType != 400) {
-      sums = await UploadSchedule.aggregateAndCount("year", findObj);
-    } else {
-      sums = await UploadSchedule.aggregateAndCountPfa("year", agentId);
-    }
-
-    if (sums.length > 0) {
-      stat = sums[0];
-    } else {
-      stat = {
-        _id: null,
-        amount: 0,
-        employeeNormalContribution: 0,
-        count: 0,
-        employerNormalContribution: 0,
-        employeeVoluntaryContribution: 0,
-        employerVoluntaryContribution: 0,
-      };
-    }
-
-    return res.status(200).json({
-      message: "Year stat fetched successfully",
-      data: stat,
-      meta: {
-        currentPage: 1,
-        pageSize: 1,
-        pageTotal: 1,
-      },
-    });
-  } catch (e) {
-    console.log("dashboardController-countItemYear", e);
-    next(e);
-  }
-};
-
 const getItems = async (req, res, next) => {
   try {
     const items = await Item.findAllItems();
@@ -160,46 +47,6 @@ const getStates = async (req, res, next) => {
   }
 };
 
-const sumYearMonths = async (req, res, next) => {
-  try {
-    // Get the token parameters
-    let { id: agentId, userType, rsaPin, companyCode } = req.user;
-
-    const findObj = {};
-
-    // for companies and admin staff
-    if ((userType == 100 || userType == 300) && companyCode) {
-      findObj["companyCode"] = companyCode;
-    }
-    // for staff
-    if (userType == 200) {
-      findObj["rsaPin"] = rsaPin;
-      findObj["paid"] = 1;
-    }
-
-    let sums = [];
-
-    if (userType != 400) {
-      sums = await UploadSchedule.aggregateSumGroup(findObj);
-    } else {
-      sums = await UploadSchedule.aggregateSumGroupPfa(agentId);
-    }
-
-    return res.status(200).json({
-      message: "Year months stat fetched successfully",
-      data: sums,
-      meta: {
-        currentPage: 1,
-        pageSize: 1,
-        pageTotal: 1,
-      },
-    });
-  } catch (e) {
-    console.log("dashboardController-sumYearMonths", e);
-    next(e);
-  }
-};
-
 const testTemplates = async (req, res, next) => {
   try {
     // send email
@@ -225,11 +72,163 @@ const testTemplates = async (req, res, next) => {
   }
 };
 
+const blueBox = async (req, res, next) => {
+  try {
+    // Get the token parameters
+    let { id: agentId, userType, companyCode, rsaPin } = req.user;
+
+    let { year } = req.body;
+
+    let totals = 0;
+    const searchBody = {
+      year: year ? year : new Date().getFullYear(),
+    };
+
+    if (userType <= 300) {
+      searchBody["companyCode"] = companyCode;
+      totals = await UploadSchedule.sumAll(searchBody);
+    } else {
+      totals = await Item.sumAll();
+    }
+
+    return res.status(200).json({
+      message: "Data fetched successfully",
+      totals: totals,
+    });
+  } catch (e) {
+    console.log("dashboardController-blueBox", e);
+    next(e);
+  }
+};
+
+const pinkBox = async (req, res, next) => {
+  try {
+    // Get the token parameters
+    let { id: agentId, userType, companyCode, rsaPin } = req.user;
+
+    let { month } = req.body;
+
+    let count = 0;
+    const searchBody = {};
+
+    if (userType == 100) {
+      searchBody["companyCode"] = companyCode;
+      searchBody["year"] = new Date().getFullYear();
+      searchBody["month"] = month ? month : new Date().getMonth(); //cos js month is less than 1
+      count = await UploadSchedule.countStaff4Month(searchBody);
+    } else {
+      count = await Item.sumAll();
+    }
+
+    return res.status(200).json({
+      message: "Data fetched successfully",
+      count: count,
+    });
+  } catch (e) {
+    console.log("dashboardController-pinkBox", e);
+    next(e);
+  }
+};
+
+const grayBox = async (req, res, next) => {
+  try {
+    // Get the token parameters
+    let { id: agentId, userType, companyCode, rsaPin } = req.user;
+
+    let { month, contributionType } = req.body;
+
+    let data1 = 0;
+    let data2 = 0;
+    const searchBody = {};
+
+    if (userType == 100) {
+      searchBody["companyCode"] = companyCode;
+      searchBody["year"] = new Date().getFullYear();
+      /* Get the sum for the year */
+      data2 = await UploadSchedule.sumAll(searchBody);
+      data2 = data2[contributionType];
+      searchBody["month"] = month ? month : new Date().getMonth(); //cos js month is less than 1
+      /* Get the sum for the month */
+      data1 = await UploadSchedule.sumAll(searchBody);
+      data1 = data1[contributionType];
+    } else {
+      data1 = await Item.sumAll();
+      data2 = await Item.sumAll();
+    }
+
+    return res.status(200).json({
+      message: "Data fetched successfully",
+      totals: { data1, data2 },
+    });
+  } catch (e) {
+    console.log("dashboardController-grayBox", e);
+    next(e);
+  }
+};
+
+const graphBox = async (req, res, next) => {
+  try {
+    // Get the token parameters
+    let { id: agentId, userType, companyCode, rsaPin } = req.user;
+
+    let { year } = req.body;
+
+    let series = [];
+    const searchBody = {};
+
+    if (userType == 100) {
+      searchBody["companyCode"] = companyCode;
+      searchBody["year"] = year ? year : new Date().getFullYear();
+      series = await UploadSchedule.sumAllByMonth(searchBody);
+    } else {
+      series = await Item.sumAll();
+    }
+
+    return res.status(200).json({
+      message: "Data fetched successfully",
+      series: series,
+    });
+  } catch (e) {
+    console.log("dashboardController-graphBox", e);
+    next(e);
+  }
+};
+
+const tableBox = async (req, res, next) => {
+  try {
+    // Get the token parameters
+    let { id: agentId, userType, companyCode, rsaPin } = req.user;
+
+    let { year } = req.body;
+
+    let data = [];
+    const searchBody = {};
+
+    if (userType == 100) {
+      searchBody["companyCode"] = companyCode;
+      searchBody["year"] = year ? year : new Date().getFullYear();
+      data = await UploadSchedule.sumCountAllByMonth(searchBody);
+    } else {
+      data = await Item.sumAll();
+    }
+
+    return res.status(200).json({
+      message: "Data fetched successfully",
+      data: data,
+    });
+  } catch (e) {
+    console.log("dashboardController-tableBox", e);
+    next(e);
+  }
+};
+
 module.exports = {
   getItems,
-  countItemMonth,
-  countItemYear,
-  getStates,
-  sumYearMonths,
   testTemplates,
+  getStates,
+  blueBox,
+  pinkBox,
+  grayBox,
+  graphBox,
+  tableBox,
 };

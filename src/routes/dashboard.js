@@ -9,19 +9,25 @@ const { authenticate } = require("../middlewares");
 module.exports = () => {
   // ----------Dashboard specific routes --------------
 
-  // get all items
+  /* get the data for the blue-box */
+  api.post("/blue-box", authenticate, dashboardController.blueBox);
+  /* get the data for the pink-box */
+  api.post("/pink-box", authenticate, dashboardController.pinkBox);
+  /* get the data for the gray-box */
+  api.post("/gray-box", authenticate, dashboardController.grayBox);
+  /* get the data for the graph-box */
+  api.post("/graph-box", authenticate, dashboardController.graphBox);
+  /* get the data for the graph-box */
+  api.post("/graph-box", authenticate, dashboardController.graphBox);
+  /* get the data for the table-box */
+  api.post("/table-box", authenticate, dashboardController.tableBox);
+  /* get all items */
   api.get("/items", authenticate, dashboardController.getItems);
-  // count all items for month
-  api.get("/items-month", authenticate, dashboardController.countItemMonth);
-  // count all items for year
-  api.get("/items-year", authenticate, dashboardController.countItemYear);
-  // get all states
+  /* get all states */
   api.get("/states", dashboardController.getStates);
-  // sum all for months in year
-  api.get("/year-months", authenticate, dashboardController.sumYearMonths);
-  // get user menus
+  /* get user menus */
   api.get("/menus", authenticate, menuController.getMenus);
-  // get all staff menus
+  /* get all staff menus */
   api.post(
     "/staff-menus",
     authenticate,

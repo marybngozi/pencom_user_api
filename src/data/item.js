@@ -623,6 +623,10 @@ const updateTransmit = async ({ companyCode, pfaCode, batchId, agentId }) => {
   });
 };
 
+const sumAll = async () => {
+  return 1200090;
+};
+
 module.exports = {
   findAllItems,
   findItem,
@@ -634,4 +638,5 @@ module.exports = {
   buildContributionPfas,
   buildContributionItem,
   updateTransmit,
+  sumAll,
 };
