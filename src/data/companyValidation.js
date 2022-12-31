@@ -1,5 +1,6 @@
 const moment = require("moment");
-const User = require("./user");
+const UserData = require("./user");
+const { User } = require("../models/user");
 const { CompanyValidation } = require("../models/companyValidation");
 const { CompanyValidationToken } = require("../models/companyValidationToken");
 const { AdminStaff } = require("../models/adminStaff");
@@ -98,7 +99,7 @@ const updateValidation = async ({ companyCode, agentId, doneStatus }) => {
     { new: true }
   );
 
-  await User.updateDetails(agentId, { companyCode });
+  await UserData.updateDetails(agentId, { companyCode });
 
   return compValidation;
 };
@@ -249,7 +250,7 @@ const createAdminStaff = async ({
 };
 
 const deleteStaff = async (rsaPin, companyCode) => {
-  return await AdminStaff.findOneAndUpdate(
+  const deletedStaff = await AdminStaff.findOneAndUpdate(
     {
       rsaPin,
       companyCode,
@@ -260,6 +261,18 @@ const deleteStaff = async (rsaPin, companyCode) => {
     },
     { new: true }
   );
+
+  /* check if there is any other existing company for the staff */
+  const existingCompany = await AdminStaff.findOne({
+    rsaPin,
+    deleted: false,
+  });
+
+  /* If no existingCompany, then set userType back to staff  */
+  if (!existingCompany)
+    await User.findOneAndUpdate({ rsaPin }, { userType: 200 });
+
+  return deletedStaff;
 };
 
 module.exports = {

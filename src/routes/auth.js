@@ -91,7 +91,7 @@ module.exports = () => {
     companyValidationController.getCompanyStaffs
   );
   // delete a company admin staff
-  api.get(
+  api.post(
     "/delete-staff",
     authenticate,
     accountValidate,
