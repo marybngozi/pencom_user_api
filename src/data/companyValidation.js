@@ -249,6 +249,20 @@ const createAdminStaff = async ({
   });
 };
 
+const updateAdminStaff = async (search, body) => {
+  return await AdminStaff.findOneAndUpdate(
+    {
+      ...search,
+      deleted: false,
+    },
+    {
+      ...body,
+      updatedAt: new Date(),
+    },
+    { new: true }
+  );
+};
+
 const deleteStaff = async (rsaPin, companyCode) => {
   const deletedStaff = await AdminStaff.findOneAndUpdate(
     {
@@ -258,6 +272,7 @@ const deleteStaff = async (rsaPin, companyCode) => {
     },
     {
       deleted: true,
+      deletedAt: new Date(),
     },
     { new: true }
   );
@@ -287,6 +302,7 @@ module.exports = {
   findValidation,
   getAdminStaff,
   createAdminStaff,
+  updateAdminStaff,
   getAdminStaffs,
   deleteStaff,
 };

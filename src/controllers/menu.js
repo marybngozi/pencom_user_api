@@ -64,6 +64,20 @@ const getStaffMenus = async (req, res, next) => {
   }
 };
 
+const getCompanyMenus = async (req, res, next) => {
+  try {
+    const menus = await Menu.getOnlyCompanyAssignable();
+
+    return res.status(200).json({
+      message: "Company Menus fetched successfully",
+      data: menus,
+    });
+  } catch (e) {
+    console.log("menuController-getCompanyMenus", e);
+    next(e);
+  }
+};
+
 const updateStaffMenu = async (req, res, next) => {
   try {
     // Get the token parameters
@@ -90,5 +104,6 @@ const updateStaffMenu = async (req, res, next) => {
 module.exports = {
   getMenus,
   getStaffMenus,
+  getCompanyMenus,
   updateStaffMenu,
 };

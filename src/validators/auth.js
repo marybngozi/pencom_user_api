@@ -238,6 +238,25 @@ const makeAdminStaff = async (req, res, next) => {
   }
 };
 
+const adminStaffInviteSchema = Joi.object({
+  rsaPin: Joi.string().required(),
+  acceptUrl: Joi.string().uri().required(),
+});
+
+const adminStaffInvite = async (req, res, next) => {
+  try {
+    req.body = { ...req.body, ...req.params };
+    await adminStaffInviteSchema.validateAsync(req.body, { abortEarly: false });
+    next();
+  } catch (err) {
+    console.log("makeAdminStaffValidator", err.message);
+    return res.status(400).json({
+      message: err.message,
+      errorCode: "V400",
+    });
+  }
+};
+
 module.exports = {
   registerCompany,
   registerStaff,
@@ -250,4 +269,5 @@ module.exports = {
   companyValidate,
   companyVerify,
   makeAdminStaff,
+  adminStaffInvite,
 };

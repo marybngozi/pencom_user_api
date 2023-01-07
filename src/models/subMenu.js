@@ -28,6 +28,11 @@ const documentSchema = new Schema(
       type: Number,
       required: true,
     },
+    assignable: {
+      type: Boolean,
+      default: false,
+      required: true,
+    },
     createdAt: {
       type: Date,
       required: true,

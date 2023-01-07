@@ -46,7 +46,7 @@ const getUsersMenu = async (userType) => {
 
   const userMainMenusIds = subMenus.map((subMenu) => subMenu.menuId);
 
-  // filter the mainMenu
+  /* filter the mainMenu */
   mainMenus = mainMenus.filter((menu) => {
     for (const umiD of userMainMenusIds) {
       if (umiD.equals(menu.id)) return true;
@@ -110,7 +110,7 @@ const getMenuAdminStaff = async (agentId, companyCode) => {
 
   const userMainMenusIds = allUserSubMenus.map((subMenu) => subMenu.menuId);
 
-  // filter the mainMenu
+  /* filter the mainMenu */
   mainMenus = mainMenus.filter((menu) => {
     for (const umiD of userMainMenusIds) {
       if (umiD.equals(menu.id)) return true;
@@ -127,7 +127,7 @@ const getMenuAdminStaff = async (agentId, companyCode) => {
 };
 
 const getMenuAdminStaffOnly = async (agentId, companyCode) => {
-  // gets only the menus list for further assigning
+  /* gets only the menus list for further assigning */
   const userMenus = await UserMenu.findOne(
     {
       deleted: false,
@@ -142,47 +142,73 @@ const getMenuAdminStaffOnly = async (agentId, companyCode) => {
   return userMenus ? userMenus.menus : [];
 };
 
-const createBaseAdminStaffMenu = async ({ userId, companyCode }) => {
-  // check if there is an existing menu for that staff for that company
-  const menuExists = await UserMenu.findOne({
-    userId,
-    companyCode,
+const getOnlyCompanyAssignable = async () => {
+  /* gets only the company menus list for further assigning */
+  let menus = [];
+
+  const mainMenus = await MainMenu.find({
+    deleted: false,
   });
 
-  if (menuExists) return;
+  if (!mainMenus.length) return menus;
 
-  const baseSubMenus = await SubMenu.find(
+  for (let i = 0; i < mainMenus.length; i++) {
+    const menu = mainMenus[i];
+    let subMenus = await SubMenu.find(
+      {
+        deleted: false,
+        menuId: menu.id,
+        assignable: true,
+        menuType: "company",
+      },
+      {
+        path: 1,
+        name: 1,
+        id: 1,
+        menuType: 1,
+      }
+    );
+
+    if (!subMenus.length) continue;
+
+    menus.push({
+      name: menu.name,
+      icon: menu.icon,
+      id: menu.id,
+      subMenus: subMenus,
+    });
+  }
+
+  return menus;
+};
+
+const deleteUserMenu = async (userId, companyCode) => {
+  const deletedMenu = await UserMenu.findOneAndUpdate(
     {
+      userId,
+      companyCode,
       deleted: false,
-      menuType: "adminStaff",
     },
     {
-      id: 1,
-    }
+      deleted: true,
+      deletedAt: new Date(),
+    },
+    { new: true }
   );
 
-  if (!baseSubMenus.length) return;
-
-  const baseMenuids = baseSubMenus.map((baseMenu) => baseMenu.id);
-
-  // create the base menu
-  const staffMenu = new UserMenu({
-    userId,
-    companyCode,
-    menus: baseMenuids,
-  });
-  await staffMenu.save();
+  return deletedMenu;
 };
 
 const addStaffAdminMenu = async ({ userId, companyCode, subMenuIds }) => {
-  // check if there is an existing menu for that staff for that company
+  /* check if there is an existing menu for that staff for that company */
   const menuExists = await UserMenu.findOne({
     userId,
     companyCode,
+    deleted: false,
   });
 
   if (!menuExists) {
-    // create the base menu
+    /* create the base menu */
     const staffMenu = new UserMenu({
       userId,
       companyCode,
@@ -206,6 +232,7 @@ module.exports = {
   getUsersMenu,
   getMenuAdminStaff,
   getMenuAdminStaffOnly,
+  getOnlyCompanyAssignable,
   addStaffAdminMenu,
-  createBaseAdminStaffMenu,
+  deleteUserMenu,
 };

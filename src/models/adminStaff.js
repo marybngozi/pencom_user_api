@@ -21,6 +21,12 @@ const documentSchema = new Schema(
       type: Schema.Types.ObjectId,
       ref: "User",
       required: true,
+      /* user _id of the staff */
+    },
+    inviteAccepted: {
+      type: Boolean,
+      default: false,
+      required: true,
     },
     createdAt: {
       type: Date,

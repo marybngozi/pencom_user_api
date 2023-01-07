@@ -22,6 +22,7 @@ const SubMenus = [
     menuId: "636b54c977cd215910d2dc67",
     menuType: "company",
     pindex: 1,
+    assignable: true,
   },
   {
     name: "Uploaded Schedule Status",
@@ -29,6 +30,7 @@ const SubMenus = [
     menuId: "636b54c977cd215910d2dc67",
     menuType: "company",
     pindex: 2,
+    assignable: true,
   },
   {
     name: "Processed Schedules",
@@ -36,6 +38,7 @@ const SubMenus = [
     menuId: "636b54c977cd215910d2dc67",
     menuType: "company",
     pindex: 3,
+    assignable: true,
   },
   {
     name: "Profile",

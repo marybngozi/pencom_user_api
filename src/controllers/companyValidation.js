@@ -59,25 +59,31 @@ const validationNotification = async (token, email, phone, companyName) => {
   return responseMessage;
 };
 
-const makeAdminStaff = async (req, res, next) => {
+const adminStaffInvite = async (req, res, next) => {
   try {
-    // Get the token parameters
+    /* Get the token parameters */
     let { userType, agentId, companyCode } = req.user;
-    let { rsaPin } = req.body;
+    let { rsaPin, acceptUrl } = req.body;
 
-    // get user with rsaPin
+    /* get user with rsaPin */
     const staff = await User.getUser({ rsaPin });
+    const company = await User.getUser({ companyCode });
 
-    // if user was found
+    /* if user was found */
     if (!staff) throw new BadRequestError("No Staff with RSA pin provided");
 
-    // ifuser is not verified
+    /* ifuser is not verified */
     if (!staff.accountVerified)
       throw new BadRequestError(
         "Staff account is not verified. Staff shoule verify their email first!"
       );
 
-    // add user to staff admin record
+    /* Check if the staff already exists for the comapny  */
+    const staffExist = await CompanyValidation.getAdminStaff(staff.id);
+    if (staffExist)
+      throw new BadRequestError("Staff is already a Sub-Admin of the company!");
+
+    /* add user to staff admin record */
     const adminStaff = await CompanyValidation.createAdminStaff({
       agentId: staff.id,
       companyCode,
@@ -87,14 +93,23 @@ const makeAdminStaff = async (req, res, next) => {
 
     if (!adminStaff) throw new ServerError("Failed to create admin staff");
 
-    // update user to staffAdmin
-    const newUser = await User.updateDetails(staff.id, { userType: 300 });
+    const emailData = {
+      staffName: staff.firstName + " " + staff.lastName,
+      acceptLink: acceptUrl + "/" + adminStaff._id,
+      companyName: company.companyName,
+      year: new Date().getFullYear(),
+    };
 
-    /* // add the base menu for the staff
-    await Menu.createBaseAdminStaffMenu({ userId: staff.id, companyCode }); */
+    /* send an invite to the staff and wait for response */
+    const message = MakeEmailTemplate("staffInvite.html", emailData);
+
+    const subject = `Invite to Sub-Admin Staff`;
+
+    /* send welcome/verify email to the user */
+    sendMail(staff.email, message, subject);
 
     return res.status(201).json({
-      message: `${staff.firstName} ${staff.lastName} has been added as an Admin staff for company`,
+      message: `Invite has been sent to ${staff.firstName} ${staff.lastName} to join as an Admin staff`,
       meta: {
         currentPage: 1,
         pageSize: 1,
@@ -102,7 +117,38 @@ const makeAdminStaff = async (req, res, next) => {
       },
     });
   } catch (e) {
-    console.log("authController-makeAdminStaff", e);
+    console.log("companyValidationController-adminStaffInvite", e);
+    next(e);
+  }
+};
+
+const staffAcceptInvite = async (req, res, next) => {
+  try {
+    /* Get the body parameters */
+    let { token } = req.body;
+
+    /* update the invite for the admin sttaff */
+    const adminStaffUpdate = await CompanyValidation.updateAdminStaff(
+      {
+        _id: token,
+        inviteAccepted: false,
+      },
+      { inviteAccepted: true }
+    );
+
+    /* if token as _id was not found or have been used before */
+    if (!adminStaffUpdate)
+      throw new BadRequestError("Link maybe broken or is no longer valid!");
+
+    /* update user to staffAdmin */
+    // const staff = await User.getUser({ rsaPin: adminStaffUpdate.rsaPin });
+    await User.updateDetails(adminStaffUpdate.agentId, { userType: 300 });
+
+    return res.status(201).json({
+      message: `Invite has been accepted successfully`,
+    });
+  } catch (e) {
+    console.log("companyValidationController-staffAcceptInvite", e);
     next(e);
   }
 };
@@ -194,7 +240,7 @@ const companyValidate = async (req, res, next) => {
       },
     });
   } catch (e) {
-    console.log("authController-companyValidate", e);
+    console.log("companyValidationController-companyValidate", e);
     next(e);
   }
 };
@@ -231,7 +277,7 @@ const companyVerify = async (req, res, next) => {
       message: "Account verification was successfully!",
     });
   } catch (e) {
-    console.log("authController-verify", e);
+    console.log("companyValidationController-verify", e);
     next(e);
   }
 };
@@ -278,7 +324,7 @@ const resendVerify = async (req, res, next) => {
       },
     });
   } catch (e) {
-    console.log("authController-resendVerify", e);
+    console.log("companyValidationController-resendVerify", e);
     next(e);
   }
 };
@@ -300,7 +346,7 @@ const getCompanyStaffs = async (req, res, next) => {
       },
     });
   } catch (e) {
-    console.log("authController-getCompanyStaffs", e);
+    console.log("companyValidationController-getCompanyStaffs", e);
     next(e);
   }
 };
@@ -312,7 +358,10 @@ const removeCompanyStaffs = async (req, res, next) => {
 
     let { rsaPin } = req.body;
 
-    await CompanyValidation.deleteStaff(rsaPin, companyCode);
+    const adminStaff = await CompanyValidation.deleteStaff(rsaPin, companyCode);
+
+    /* Delete staff menu for the company */
+    await Menu.deleteUserMenu(adminStaff.agentId, companyCode);
 
     return res.status(200).json({
       message: "Admin staff deleted successfully",
@@ -323,14 +372,15 @@ const removeCompanyStaffs = async (req, res, next) => {
       },
     });
   } catch (e) {
-    console.log("authController-removeCompanyStaffs", e);
+    console.log("companyValidationController-removeCompanyStaffs", e);
     next(e);
   }
 };
 
 module.exports = {
   resendVerify,
-  makeAdminStaff,
+  adminStaffInvite,
+  staffAcceptInvite,
   companyValidate,
   companyVerify,
   getCompanyStaffs,
