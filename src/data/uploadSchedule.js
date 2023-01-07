@@ -48,6 +48,116 @@ const countStaff4Month = async (body) => {
   return sums;
 };
 
+const countStaffContributingCompanies = async (body) => {
+  const sums = await UploadSchedule.distinct("companyCode", {
+    deleted: false,
+    ...body,
+  }).count();
+
+  return sums;
+};
+
+const staffContributingCompanies = async (body) => {
+  const sums = await UploadSchedule.aggregate([
+    {
+      $match: {
+        deleted: false,
+        ...body,
+        paid: 1,
+      },
+    },
+    {
+      $group: {
+        _id: "$companyCode",
+      },
+    },
+    {
+      $lookup: {
+        from: "users", // collection name in db
+        localField: "_id",
+        foreignField: "companyCode",
+        as: "company",
+      },
+    },
+    {
+      $set: {
+        label: {
+          $arrayElemAt: ["$company.companyName", 0],
+        },
+        value: "$_id",
+        company: null,
+      },
+    },
+    {
+      $sort: { companyName: 1 },
+    },
+  ]);
+
+  return sums;
+};
+
+const sumStaffContributingCompanies = async (body, { page = 1 }) => {
+  const skip = (Number(page) - 1) * PAGESIZE;
+  let sums = await UploadSchedule.aggregate([
+    {
+      $match: {
+        deleted: false,
+        ...body,
+        paid: 1,
+      },
+    },
+    {
+      $group: {
+        _id: "$companyCode",
+        amount: { $sum: "$amount" },
+        month: { $max: "$month" },
+        year: { $max: "$year" },
+      },
+    },
+    {
+      $lookup: {
+        from: "users", // collection name in db
+        localField: "_id",
+        foreignField: "companyCode",
+        as: "company",
+      },
+    },
+    {
+      $set: {
+        companyName: {
+          $arrayElemAt: ["$company.companyName", 0],
+        },
+        company: null,
+      },
+    },
+    {
+      $sort: { month: 1, year: 1 },
+    },
+    {
+      $facet: {
+        metadata: [{ $count: "total" }, { $addFields: { page: page } }],
+        data: [{ $skip: skip }, { $limit: PAGESIZE }],
+      },
+    },
+    {
+      $project: {
+        data: 1,
+        meta: { $arrayElemAt: ["$metadata", 0] },
+      },
+    },
+  ]);
+
+  /* Format the data */
+  for (const sum of sums[0].data) {
+    sum.lastMonthContributed = moment()
+      .month(sum.month - 1)
+      .year(sum.year)
+      .format("MMMM YYYY");
+  }
+
+  return sums;
+};
+
 const sumAllByMonth = async (body) => {
   const series = [
     {
@@ -575,11 +685,11 @@ const deleteTask = async (id) => {
   );
 };
 
-const getTransactions = async (rsaPin) => {
+const getTransactions = async (body) => {
   return UploadSchedule.aggregate([
     {
       $match: {
-        rsaPin,
+        ...body,
         deleted: false,
         paid: 1,
       },
@@ -767,6 +877,9 @@ module.exports = {
   addSchedules,
   sumAll,
   countStaff4Month,
+  countStaffContributingCompanies,
+  sumStaffContributingCompanies,
+  staffContributingCompanies,
   sumAllByMonth,
   bulkDelete,
   deleteBatch,

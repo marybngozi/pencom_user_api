@@ -345,7 +345,7 @@ const getStaff = async (req, res, next) => {
     if (!staff) throw new NotFoundError("Staff with RSA PIN was not found");
 
     return res.status(201).json({
-      message: "Password update successful!",
+      message: "Fetched successful!",
       data: staff,
       meta: {
         currentPage: 1,

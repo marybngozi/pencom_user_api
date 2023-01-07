@@ -7,9 +7,9 @@ const { authenticate, accountValidate } = require("../middlewares");
 const { uploadExcel } = require("../middlewares/upload");
 
 module.exports = () => {
-  // ---------- Schedule specific routes --------------
+  /* ---------- Schedule specific routes -------------- */
 
-  // list schedules by batch
+  /* list schedules by batch */
   api.post(
     "/list-batch",
     authenticate,
@@ -17,14 +17,14 @@ module.exports = () => {
     validator.listSchedule,
     scheduleController.listSchedule
   );
-  // list schedules in a batch
+  /* list schedules in a batch */
   api.post(
     "/list-schedule",
     authenticate,
     accountValidate,
     scheduleController.getBatchSchedule
   );
-  // delete schedule by batchID
+  /* delete schedule by batchID */
   api.post(
     "/delete-batch",
     authenticate,
@@ -32,7 +32,7 @@ module.exports = () => {
     validator.deleteScheduleBatch,
     scheduleController.deleteScheduleBatch
   );
-  // delete schedule
+  /* delete schedule */
   api.post(
     "/remove",
     authenticate,
@@ -40,7 +40,7 @@ module.exports = () => {
     validator.deleteSchedule,
     scheduleController.deleteSchedule
   );
-  // summarize schedule
+  /* summarize schedule */
   api.post(
     "/summarize",
     authenticate,
@@ -48,15 +48,7 @@ module.exports = () => {
     validator.summarizeSchedule,
     scheduleController.summarizeSchedule
   );
-  // process schedule
-  /* api.post(
-    "/process",
-    authenticate,
-    accountValidate,
-    validator.processSchedule,
-    scheduleController.processSchedule
-  ); */
-  // upload Excel schedule
+  /* upload Excel schedule */
   api.post(
     "/upload-excel",
     authenticate,
@@ -65,21 +57,21 @@ module.exports = () => {
     scheduleController.uploadScheduleExcel
   );
   api.post("/download-excel", scheduleController.downloadExcel);
-  // get schedule tasks
+  /* get schedule tasks */
   api.get(
     "/upload-status",
     authenticate,
     accountValidate,
     scheduleController.scheduleStatus
   );
-  // delete schedule tasks
+  /* delete schedule tasks */
   api.post(
     "/delete-task",
     authenticate,
     accountValidate,
     scheduleController.removeTask
   );
-  // upload schedule
+  /* upload schedule */
   api.post(
     "/upload-schedule",
     authenticate,
@@ -88,7 +80,7 @@ module.exports = () => {
     scheduleController.uploadSchedule,
     scheduleController.processSchedule
   );
-  // get processed schedules
+  /* get processed schedules */
   api.post(
     "/list-processed",
     authenticate,
@@ -96,7 +88,7 @@ module.exports = () => {
     validator.listProcessedSchedule,
     scheduleController.listProcessedSchedule
   );
-  // get processed schedules items
+  /* get processed schedules items */
   api.post(
     "/list-processed-items",
     authenticate,
@@ -104,34 +96,34 @@ module.exports = () => {
     validator.listProcessedScheduleItem,
     scheduleController.listProcessedScheduleItem
   );
-  // get mandate details
+  /* get mandate details */
   api.post(
     "/get-mandate",
     validator.listProcessedScheduleItem,
     scheduleController.getMandate
   );
-  // get contributions
+  /* get contributions */
   api.post(
     "/get-contribution",
     authenticate,
     validator.getContribution,
     scheduleController.getContribution
   );
-  // get payment details
+  /* get payment details */
   api.get(
     "/payment/:invoiceNo",
     authenticate,
     validator.listProcessedScheduleItem,
     scheduleController.getPaymentDetails
   );
-  // download uploaded schedule items
+  /* download uploaded schedule items */
   api.post(
     "/download-uploaded-items",
     authenticate,
-    validator.deleteScheduleBatch, // uses same body type
+    validator.deleteScheduleBatch /* uses same body type */,
     scheduleController.downloadUploadedItems
   );
-  // download processed items
+  /* download processed items */
   api.post(
     "/download-processed-items",
     authenticate,

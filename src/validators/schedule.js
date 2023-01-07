@@ -157,8 +157,9 @@ const listProcessedScheduleItem = async (req, res, next) => {
   }
 };
 const getContributionSchema = Joi.object({
-  dateStart: Joi.any(),
-  dateEnd: Joi.any(),
+  yearOption: Joi.any(),
+  monthOption: Joi.any(),
+  companyOption: Joi.any(),
 });
 
 const getContribution = async (req, res, next) => {

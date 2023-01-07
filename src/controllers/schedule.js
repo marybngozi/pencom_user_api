@@ -649,10 +649,21 @@ const getPaymentDetails = async (req, res, next) => {
 
 const getContribution = async (req, res, next) => {
   try {
-    // Get the body parameters
+    // Get the token parameters
     let { rsaPin } = req.user;
+
+    // Get the body parameters
+    let { yearOption, monthOption, companyOption } = req.body;
+    const searchBody = { rsaPin };
+    if (yearOption && yearOption != "All years")
+      searchBody["year"] = yearOption;
+    if (monthOption && monthOption != "All months")
+      searchBody["month"] = monthOption;
+    if (companyOption && companyOption != "all")
+      searchBody["companyCode"] = companyOption;
+
     // get the processed remittance using the custReference
-    const transactions = await UploadSchedule.getTransactions(rsaPin);
+    const transactions = await UploadSchedule.getTransactions(searchBody);
 
     return res.status(200).json({
       message: "Contributions details fetched successfully",

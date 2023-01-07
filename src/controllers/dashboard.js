@@ -84,8 +84,11 @@ const blueBox = async (req, res, next) => {
       year: year ? year : new Date().getFullYear(),
     };
 
-    if (userType <= 300) {
+    if (userType == 100) {
       searchBody["companyCode"] = companyCode;
+      totals = await UploadSchedule.sumAll(searchBody);
+    } else if (userType <= 300) {
+      searchBody["rsaPin"] = rsaPin;
       totals = await UploadSchedule.sumAll(searchBody);
     } else {
       totals = await Item.sumAll();
@@ -116,8 +119,9 @@ const pinkBox = async (req, res, next) => {
       searchBody["year"] = new Date().getFullYear();
       searchBody["month"] = month ? month : new Date().getMonth(); //cos js month is less than 1
       count = await UploadSchedule.countStaff4Month(searchBody);
-    } else {
-      count = await Item.sumAll();
+    } else if (userType <= 300) {
+      searchBody["rsaPin"] = rsaPin;
+      count = await UploadSchedule.countStaffContributingCompanies(searchBody);
     }
 
     return res.status(200).json({
@@ -135,13 +139,14 @@ const grayBox = async (req, res, next) => {
     // Get the token parameters
     let { id: agentId, userType, companyCode, rsaPin } = req.user;
 
-    let { month, contributionType } = req.body;
+    let { month, contributionType, viewOption } = req.body;
 
     let data1 = 0;
     let data2 = 0;
     const searchBody = {};
 
     if (userType == 100) {
+      /*************** COMPANY ****************/
       searchBody["companyCode"] = companyCode;
       searchBody["year"] = new Date().getFullYear();
       /* Get the sum for the year */
@@ -151,7 +156,20 @@ const grayBox = async (req, res, next) => {
       /* Get the sum for the month */
       data1 = await UploadSchedule.sumAll(searchBody);
       data1 = data1[contributionType];
-    } else {
+    } else if (userType == 200 || userType == 300) {
+      /*************** STAFF *****************/
+      if (viewOption && viewOption != "all")
+        searchBody["companyCode"] = viewOption;
+      searchBody["rsaPin"] = rsaPin;
+      searchBody["year"] = new Date().getFullYear();
+      /* Get the sum for the year */
+      data2 = await UploadSchedule.sumAll(searchBody);
+      data2 = data2[contributionType];
+      searchBody["month"] = month ? month : new Date().getMonth(); //cos js month is less than 1
+      /* Get the sum for the month */
+      data1 = await UploadSchedule.sumAll(searchBody);
+      data1 = data1[contributionType];
+    } else if (userType == 400 || userType == 500) {
       data1 = await Item.sumAll();
       data2 = await Item.sumAll();
     }
@@ -171,13 +189,21 @@ const graphBox = async (req, res, next) => {
     // Get the token parameters
     let { id: agentId, userType, companyCode, rsaPin } = req.user;
 
-    let { year } = req.body;
+    let { year, viewOption } = req.body;
 
     let series = [];
     const searchBody = {};
 
     if (userType == 100) {
+      /**************** COMPANY *****************/
       searchBody["companyCode"] = companyCode;
+      searchBody["year"] = year ? year : new Date().getFullYear();
+      series = await UploadSchedule.sumAllByMonth(searchBody);
+    } else if (userType == 200 || userType == 300) {
+      /**************** STAFF *****************/
+      if (viewOption && viewOption != "all")
+        searchBody["companyCode"] = viewOption;
+      searchBody["rsaPin"] = rsaPin;
       searchBody["year"] = year ? year : new Date().getFullYear();
       series = await UploadSchedule.sumAllByMonth(searchBody);
     } else {
@@ -205,7 +231,13 @@ const tableBox = async (req, res, next) => {
     const searchBody = {};
 
     if (userType == 100) {
+      /**************** COMPANY *****************/
       searchBody["companyCode"] = companyCode;
+      searchBody["year"] = year ? year : new Date().getFullYear();
+      data = await UploadSchedule.sumCountAllByMonth(searchBody);
+    } else if (userType == 200 || userType == 300) {
+      /**************** STAFF *****************/
+      searchBody["rsaPin"] = rsaPin;
       searchBody["year"] = year ? year : new Date().getFullYear();
       data = await UploadSchedule.sumCountAllByMonth(searchBody);
     } else {
@@ -222,6 +254,61 @@ const tableBox = async (req, res, next) => {
   }
 };
 
+const pinkSeeAll = async (req, res, next) => {
+  try {
+    // Get the token parameters
+    let { id: agentId, userType, companyCode, rsaPin } = req.user;
+
+    let { year } = req.body;
+
+    let data = {};
+    const searchBody = {};
+
+    if (userType == 200 || userType == 300) {
+      searchBody["rsaPin"] = rsaPin;
+      data = await UploadSchedule.sumStaffContributingCompanies(
+        searchBody,
+        req.query
+      );
+    } else {
+      data = await Item.sumAll();
+    }
+
+    return res.status(200).json({
+      message: "Data fetched successfully",
+      ...data[0],
+    });
+  } catch (e) {
+    console.log("dashboardController-pinkSeeAll", e);
+    next(e);
+  }
+};
+
+const listUserCompanies = async (req, res, next) => {
+  try {
+    // Get the token parameters
+    let { id: agentId, userType, rsaPin } = req.user;
+
+    let data = [];
+    const searchBody = {};
+
+    if (userType == 200 || userType == 300) {
+      searchBody["rsaPin"] = rsaPin;
+      data = await UploadSchedule.staffContributingCompanies(searchBody);
+    } else {
+      data = await Item.sumAll();
+    }
+
+    return res.status(200).json({
+      message: "Data fetched successfully",
+      data: data,
+    });
+  } catch (e) {
+    console.log("dashboardController-listUserCompanies", e);
+    next(e);
+  }
+};
+
 module.exports = {
   getItems,
   testTemplates,
@@ -231,4 +318,6 @@ module.exports = {
   grayBox,
   graphBox,
   tableBox,
+  pinkSeeAll,
+  listUserCompanies,
 };
