@@ -95,23 +95,27 @@ const verifyPassword = async (id, password) => {
   return true;
 };
 
-const getPfa = async (pfa) => {
-  return await Pfa.findOne({ pfaCode: pfa, deleted: false });
+const getPfa = async (body) => {
+  return await Pfa.findOne({ ...body, deleted: false });
 };
 
-const getAllPfas = async (option = "exclude") => {
+const getAllPfas = async (option = "exclude", body = {}) => {
   let pfas;
+  const search = {
+    ...body,
+    deleted: false,
+  };
   if (option == "include") {
-    pfas = await Pfa.find().populate("pfc", "pfcName");
+    pfas = await Pfa.find(search).populate("pfc", "pfcName");
   } else {
-    pfas = await Pfa.find();
+    pfas = await Pfa.find(search);
   }
 
   return pfas;
 };
 
-const getPfc = async (pfc) => {
-  return await Pfc.findOne({ pfcCode: pfc, deleted: false });
+const getPfc = async (body) => {
+  return await Pfc.findOne({ ...body, deleted: false });
 };
 
 const getAllPfcs = async () => {

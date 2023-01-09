@@ -17,6 +17,7 @@ const documentSchema = new Schema(
       type: Schema.Types.ObjectId,
       ref: "User",
       required: true,
+      /* user._id of the company agent */
     },
     companyCode: {
       type: String,

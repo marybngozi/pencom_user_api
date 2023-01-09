@@ -1,6 +1,7 @@
 const moment = require("moment");
 const UploadSchedule = require("../data/uploadSchedule");
 const Item = require("../data/item");
+const User = require("../data/user");
 const { NotFoundError } = require("../utils/errors");
 const MakeEmailTemplate = require("../utils/makeEmailTemplate");
 const { sendMail, validateEmail } = require("../utils/notification");
@@ -85,13 +86,18 @@ const blueBox = async (req, res, next) => {
     };
 
     if (userType == 100) {
+      /************* COMPANY *************/
       searchBody["companyCode"] = companyCode;
       totals = await UploadSchedule.sumAll(searchBody);
     } else if (userType <= 300) {
+      /************* STAFF *************/
       searchBody["rsaPin"] = rsaPin;
       totals = await UploadSchedule.sumAll(searchBody);
     } else {
-      totals = await Item.sumAll();
+      /************* PFC & PFA *************/
+      searchBody["agentId"] = agentId;
+      searchBody["userType"] = userType;
+      totals = await Item.sumAll(searchBody);
     }
 
     return res.status(200).json({
@@ -115,13 +121,25 @@ const pinkBox = async (req, res, next) => {
     const searchBody = {};
 
     if (userType == 100) {
+      /************* COMPANY *************/
       searchBody["companyCode"] = companyCode;
       searchBody["year"] = new Date().getFullYear();
       searchBody["month"] = month ? month : new Date().getMonth(); //cos js month is less than 1
       count = await UploadSchedule.countStaff4Month(searchBody);
     } else if (userType <= 300) {
+      /************* STAFF *************/
       searchBody["rsaPin"] = rsaPin;
       count = await UploadSchedule.countStaffContributingCompanies(searchBody);
+    } else if (userType == 400) {
+      /************* PFC *************/
+      const pfc = await User.getPfc({ userId: agentId });
+      searchBody["pfcId"] = pfc.id;
+      count = await Item.countStaffContributingCompanies(searchBody);
+    } else if (userType == 500) {
+      /************* PFA *************/
+      const pfa = await User.getPfa({ userId: agentId });
+      searchBody["pfaCode"] = pfa.pfaCode;
+      count = await Item.countStaffContributingCompanies(searchBody);
     }
 
     return res.status(200).json({
@@ -140,19 +158,23 @@ const grayBox = async (req, res, next) => {
     let { id: agentId, userType, companyCode, rsaPin } = req.user;
 
     let { month, contributionType, viewOption } = req.body;
+    let year = new Date().getFullYear();
+    month = month ? month : new Date().getMonth(); //cos js month is less than 1
 
     let data1 = 0;
     let data2 = 0;
-    const searchBody = {};
+    const searchBody = {
+      year: year,
+    };
 
     if (userType == 100) {
       /*************** COMPANY ****************/
       searchBody["companyCode"] = companyCode;
-      searchBody["year"] = new Date().getFullYear();
       /* Get the sum for the year */
       data2 = await UploadSchedule.sumAll(searchBody);
       data2 = data2[contributionType];
-      searchBody["month"] = month ? month : new Date().getMonth(); //cos js month is less than 1
+      searchBody["month"] = month == 0 ? 12 : month;
+      searchBody["year"] = month == 0 ? year - 1 : year;
       /* Get the sum for the month */
       data1 = await UploadSchedule.sumAll(searchBody);
       data1 = data1[contributionType];
@@ -161,17 +183,46 @@ const grayBox = async (req, res, next) => {
       if (viewOption && viewOption != "all")
         searchBody["companyCode"] = viewOption;
       searchBody["rsaPin"] = rsaPin;
-      searchBody["year"] = new Date().getFullYear();
       /* Get the sum for the year */
       data2 = await UploadSchedule.sumAll(searchBody);
       data2 = data2[contributionType];
-      searchBody["month"] = month ? month : new Date().getMonth(); //cos js month is less than 1
+      searchBody["month"] = month == 0 ? 12 : month;
+      searchBody["year"] = month == 0 ? year - 1 : year;
       /* Get the sum for the month */
       data1 = await UploadSchedule.sumAll(searchBody);
       data1 = data1[contributionType];
-    } else if (userType == 400 || userType == 500) {
-      data1 = await Item.sumAll();
-      data2 = await Item.sumAll();
+    } else if (userType == 400) {
+      /************* PFC *************/
+      if (viewOption && viewOption != "all")
+        searchBody[contributionType] = viewOption;
+      searchBody["userType"] = userType;
+      searchBody["agentId"] = agentId;
+      data2 = await Item.sumAll(searchBody);
+      searchBody["month"] = month == 0 ? 12 : month;
+      searchBody["year"] = month == 0 ? year - 1 : year;
+      /* Get the sum for the month */
+      data1 = await Item.sumAll(searchBody);
+    } else if (userType == 500) {
+      /************************************ PFA ***************************/
+      if (viewOption && viewOption != "all")
+        searchBody["companyCode"] = viewOption;
+      searchBody["userType"] = userType;
+      searchBody["agentId"] = agentId;
+      if (contributionType == "date") {
+        data2 = await Item.sumAll(searchBody);
+        searchBody["month"] = month == 0 ? 12 : month;
+        searchBody["year"] = month == 0 ? year - 1 : year;
+        /* Get the sum for the month */
+        data1 = await Item.sumAll(searchBody);
+      } else {
+        delete searchBody.year;
+        searchBody["month"] = month == 0 ? 12 : month;
+        /* Get all the sum for the group */
+        const data = await Item.sumAllGroup(searchBody);
+        /* separate into tthe types */
+        data1 = data["employerNormalContribution"];
+        data2 = data["employeeNormalContribution"];
+      }
     }
 
     return res.status(200).json({
@@ -192,22 +243,26 @@ const graphBox = async (req, res, next) => {
     let { year, viewOption } = req.body;
 
     let series = [];
-    const searchBody = {};
+    const searchBody = {
+      year: year ? year : new Date().getFullYear(),
+    };
 
     if (userType == 100) {
       /**************** COMPANY *****************/
       searchBody["companyCode"] = companyCode;
-      searchBody["year"] = year ? year : new Date().getFullYear();
       series = await UploadSchedule.sumAllByMonth(searchBody);
     } else if (userType == 200 || userType == 300) {
       /**************** STAFF *****************/
       if (viewOption && viewOption != "all")
         searchBody["companyCode"] = viewOption;
       searchBody["rsaPin"] = rsaPin;
-      searchBody["year"] = year ? year : new Date().getFullYear();
       series = await UploadSchedule.sumAllByMonth(searchBody);
     } else {
-      series = await Item.sumAll();
+      /**************** PFC & PFA *****************/
+      searchBody["userType"] = userType;
+      searchBody["agentId"] = agentId;
+      searchBody["viewOption"] = viewOption;
+      series = await Item.sumAllByMonth(searchBody);
     }
 
     return res.status(200).json({
@@ -225,23 +280,26 @@ const tableBox = async (req, res, next) => {
     // Get the token parameters
     let { id: agentId, userType, companyCode, rsaPin } = req.user;
 
-    let { year } = req.body;
+    let { year, month } = req.body;
 
     let data = [];
-    const searchBody = {};
+    const searchBody = {
+      year: year ? year : new Date().getFullYear(),
+    };
 
     if (userType == 100) {
       /**************** COMPANY *****************/
       searchBody["companyCode"] = companyCode;
-      searchBody["year"] = year ? year : new Date().getFullYear();
       data = await UploadSchedule.sumCountAllByMonth(searchBody);
     } else if (userType == 200 || userType == 300) {
       /**************** STAFF *****************/
       searchBody["rsaPin"] = rsaPin;
-      searchBody["year"] = year ? year : new Date().getFullYear();
       data = await UploadSchedule.sumCountAllByMonth(searchBody);
     } else {
-      data = await Item.sumAll();
+      /**************** PFC *****************/
+      searchBody["agentId"] = agentId;
+      if (month && month != "All months") searchBody["month"] = month;
+      data = await Item.sumCountAllByMonth(searchBody);
     }
 
     return res.status(200).json({
@@ -259,19 +317,28 @@ const pinkSeeAll = async (req, res, next) => {
     // Get the token parameters
     let { id: agentId, userType, companyCode, rsaPin } = req.user;
 
-    let { year } = req.body;
+    // let { year } = req.body;
 
     let data = {};
     const searchBody = {};
 
     if (userType == 200 || userType == 300) {
+      /************* STAFF *************/
       searchBody["rsaPin"] = rsaPin;
       data = await UploadSchedule.sumStaffContributingCompanies(
         searchBody,
         req.query
       );
-    } else {
-      data = await Item.sumAll();
+    } else if (userType == 400) {
+      /************* PFC *************/
+      const pfc = await User.getPfc({ userId: agentId });
+      searchBody["pfcId"] = pfc.id;
+      data = await Item.sumStaffContributingCompanies(searchBody, req.query);
+    } else if (userType == 500) {
+      /************* PFA *************/
+      const pfa = await User.getPfa({ userId: agentId });
+      searchBody["pfaCode"] = pfa.pfaCode;
+      data = await Item.sumStaffContributingCompanies(searchBody, req.query);
     }
 
     return res.status(200).json({
@@ -293,10 +360,21 @@ const listUserCompanies = async (req, res, next) => {
     const searchBody = {};
 
     if (userType == 200 || userType == 300) {
+      /************* STAFF *************/
       searchBody["rsaPin"] = rsaPin;
       data = await UploadSchedule.staffContributingCompanies(searchBody);
-    } else {
-      data = await Item.sumAll();
+    } else if (userType == 400) {
+      /************* PFC *************/
+      const pfc = await User.getPfc({ userId: agentId });
+      let pfas = await User.getAllPfas("exclude", { pfc: pfc.id });
+      pfas = pfas.map((pfa) => pfa.pfaCode);
+      searchBody["pfaCode"] = { $in: pfas };
+      data = await UploadSchedule.staffContributingCompanies(searchBody);
+    } else if (userType == 500) {
+      /************* PFA *************/
+      const pfa = await User.getPfa({ userId: agentId });
+      searchBody["pfaCode"] = pfa.pfaCode;
+      data = await UploadSchedule.staffContributingCompanies(searchBody);
     }
 
     return res.status(200).json({
@@ -305,6 +383,29 @@ const listUserCompanies = async (req, res, next) => {
     });
   } catch (e) {
     console.log("dashboardController-listUserCompanies", e);
+    next(e);
+  }
+};
+
+const listPfas = async (req, res, next) => {
+  try {
+    // Get the token parameters
+    let { id: agentId } = req.user;
+
+    /************* PFC *************/
+    const pfc = await User.getPfc({ userId: agentId });
+    let pfas = await User.getAllPfas("exclude", { pfc: pfc.id });
+    pfas = pfas.map((pfa) => ({
+      label: pfa.pfaName,
+      value: pfa.pfaCode,
+    }));
+
+    return res.status(200).json({
+      message: "Data fetched successfully",
+      data: pfas,
+    });
+  } catch (e) {
+    console.log("dashboardController-listPfas", e);
     next(e);
   }
 };
@@ -320,4 +421,5 @@ module.exports = {
   tableBox,
   pinkSeeAll,
   listUserCompanies,
+  listPfas,
 };

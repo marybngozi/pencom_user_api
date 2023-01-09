@@ -1,6 +1,6 @@
 const PfaUsers = [
   {
-    _id: "637627ce24d3b8360533f365",
+    _id: "63bbefff7eaab2ba71d9ceec",
     companyName: "AXA MANSARD PENSIONS LIMITED",
     password: "12qw!@QW",
     email: "marybngozi+231@gmail.com",
@@ -84,8 +84,8 @@ const Pfas = [
   {
     pfaName: "AXA MANSARD PENSIONS LIMITED",
     pfaCode: 35,
+    userId: "63bbefff7eaab2ba71d9ceec",
     pfc: "63650f1dfcf27d12b5441df3",
-    userId: "637627ce24d3b8360533f365",
   },
   {
     pfaName: "IEI-ANCHOR PENSION MANAGERS LIMITED",

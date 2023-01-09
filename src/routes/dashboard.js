@@ -23,12 +23,14 @@ module.exports = () => {
   api.post("/table-box", authenticate, dashboardController.tableBox);
   /* get the data for the table-box */
   api.post("/pink-see-all", authenticate, dashboardController.pinkSeeAll);
-  /* get the comppanies for a user  */
+  /* get the companies for a user  */
   api.get(
     "/user-companies",
     authenticate,
     dashboardController.listUserCompanies
   );
+  /* get the pfas of a pfc */
+  api.get("/get-pfas", authenticate, dashboardController.listPfas);
   /* get all items */
   api.get("/items", authenticate, dashboardController.getItems);
   /* get all states */
