@@ -29,18 +29,97 @@ const addContributions = async (contributions) => {
   return await PfcContribution.create(contributions);
 };
 
+const getBatchContributionsPfa = async (body) => {
+  const pfcx = await Pfc.findOne(
+    {
+      userId: body.agentId,
+      deleted: false,
+    },
+    {
+      id: 1,
+    }
+  );
+
+  delete body.agentId;
+  body["pfcId"] = mongoose.Types.ObjectId(pfcx.id);
+
+  const contributions = await PfcContribution.aggregate([
+    {
+      $match: {
+        ...body,
+        deleted: false,
+      },
+    },
+    {
+      $lookup: {
+        from: "uploadschedules",
+        localField: "scheduleId",
+        foreignField: "_id",
+        as: "schedule",
+      },
+    },
+    {
+      $lookup: {
+        from: "pfas",
+        localField: "pfaCode",
+        foreignField: "pfaCode",
+        as: "pfa",
+      },
+    },
+    {
+      $set: {
+        amount: {
+          $arrayElemAt: ["$schedule.amount", 0],
+        },
+        pfaName: {
+          $arrayElemAt: ["$pfa.pfaName", 0],
+        },
+      },
+    },
+    {
+      $group: {
+        _id: "$pfaCode",
+        itemCount: {
+          $count: "{}",
+        },
+        month: {
+          $first: "$month",
+        },
+        year: {
+          $first: "$year",
+        },
+        pfaName: {
+          $first: "$pfaName",
+        },
+        amount: {
+          $sum: "$amount",
+        },
+        createdAt: {
+          $first: "$createdAt",
+        },
+      },
+    },
+    {
+      $sort: {
+        createdAt: -1,
+      },
+    },
+  ]);
+
+  return contributions;
+};
+
 const getBatchContributionsPfc = async ({
-  itemCode,
+  companyCode,
   startDate,
   endDate,
-  agentId,
 }) => {
   const findObj = {
     deleted: false,
   };
 
-  if (itemCode) {
-    findObj["itemCode"] = itemCode;
+  if (companyCode) {
+    findObj["companyCode"] = companyCode;
   }
 
   const pfcx = await Pfc.findOne(
@@ -51,6 +130,7 @@ const getBatchContributionsPfc = async ({
       id: 1,
     }
   );
+
   findObj["pfcId"] = mongoose.Types.ObjectId(pfcx.id);
 
   const contributions = await PfcContribution.aggregate([
@@ -942,6 +1022,7 @@ module.exports = {
   findItem,
   getAllStates,
   addContributions,
+  getBatchContributionsPfa,
   getBatchContributionsPfc,
   getContributionPfas,
   getContributionItems,

@@ -4,11 +4,53 @@ const Item = require("../data/item");
 // const { NotFoundError } = require("../utils/errors");
 const { createExcel } = require("../utils/excel");
 
+const unRemittedContributions = async (req, res, next) => {
+  try {
+    // Get the token parameters
+    let { id: agentId } = req.user;
+    let { company, dateStart, dateEnd } = req.body;
+
+    // when only one date is provided, send error, the both dates must be provided
+    if ((!dateStart && dateEnd) || (dateStart && !dateEnd)) {
+      throw new BadRequestError("Both dates or none must be provided");
+    }
+
+    let findObj = { transmitted: false, agentId };
+
+    if (dateStart && dateEnd) {
+      // use provided Date duration
+      const startDate = new Date(dateStart);
+      let endDate = new Date(dateEnd);
+      // Adds one day to adjust search
+      endDate.setDate(endDate.getDate() + 1);
+
+      findObj["createdAt"] = { $gte: startDate, $lte: endDate };
+    }
+
+    if (company && company != "all") findObj["companyCode"] = company;
+
+    const contributions = await Item.getBatchContributionsPfa(findObj);
+
+    return res.status(200).json({
+      message: "Contributions fetched successfully",
+      data: contributions,
+      meta: {
+        currentPage: 1,
+        pageSize: 1,
+        pageTotal: 1,
+      },
+    });
+  } catch (e) {
+    console.log("pfcController-listBatchContributions", e);
+    next(e);
+  }
+};
+
 const listBatchContributions = async (req, res, next) => {
   try {
     // Get the token parameters
     let { id: agentId, userType } = req.user;
-    let { itemCode, dateStart, dateEnd } = req.body;
+    let { company, dateStart, dateEnd } = req.body;
 
     // when only one date is provided, send error, the both dates must be provided
     if ((!dateStart && dateEnd) || (dateStart && !dateEnd)) {
@@ -31,7 +73,8 @@ const listBatchContributions = async (req, res, next) => {
       endDate.setDate(endDate.getDate() + 1);
     }
 
-    let findObj = { itemCode, startDate, endDate, agentId };
+    let findObj = { startDate, endDate, agentId };
+    if (company && company != "all") findObj["companyCode"] = company;
 
     const contributions = await Item.getBatchContributionsPfc(findObj);
 
@@ -166,6 +209,7 @@ const transmitContributions = async (req, res, next) => {
 };
 
 module.exports = {
+  unRemittedContributions,
   listBatchContributions,
   listContributionItems,
   downloadContributions,

@@ -18,6 +18,14 @@ module.exports = () => {
     paymentController.walletPayment
   );
 
+  // get the unremitted contributions for a PFC
+  api.post(
+    "/get-unremit-contribution",
+    authenticate,
+    validator.listBatchContributions,
+    pfcController.listBatchContributions
+  );
+
   // get the batch contributions for a PFC or PFA
   api.post(
     "/get-batch-contribution",

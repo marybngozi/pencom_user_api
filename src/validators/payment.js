@@ -20,7 +20,7 @@ const walletPayment = async (req, res, next) => {
 };
 
 const listBatchContributionsSchema = Joi.object({
-  itemCode: Joi.any(),
+  company: Joi.any(),
   dateStart: Joi.any(),
   dateEnd: Joi.any(),
 });
