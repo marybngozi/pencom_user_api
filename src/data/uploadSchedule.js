@@ -669,13 +669,13 @@ const getTask = async (id) => {
   return task;
 };
 
-const getTasks = async ({ agentId }) => {
-  const findObj = {
+const getTasks = async (findObj) => {
+  return await UploadTask.find({
     deleted: false,
-    agentId,
-  };
-
-  return await UploadTask.find(findObj).sort({ createdAt: -1 });
+    ...findObj,
+  }).sort({
+    createdAt: -1,
+  });
 };
 
 const updateTask = async (id, status) => {

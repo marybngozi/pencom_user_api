@@ -58,7 +58,7 @@ module.exports = () => {
   );
   api.post("/download-excel", scheduleController.downloadExcel);
   /* get schedule tasks */
-  api.get(
+  api.post(
     "/upload-status",
     authenticate,
     accountValidate,

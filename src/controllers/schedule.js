@@ -335,8 +335,23 @@ const scheduleStatus = async (req, res, next) => {
   try {
     // Get the token parameters
     let { agentId } = req.user;
+    let { month, year, statusOption } = req.body;
 
-    const tasks = await UploadSchedule.getTasks({ agentId });
+    let findObj = { agentId };
+
+    if (statusOption && statusOption != 0) {
+      findObj["status"] = statusOption;
+    }
+
+    if (month) {
+      findObj["month"] = month;
+    }
+
+    if (year && year != "All years") {
+      findObj["year"] = year;
+    }
+
+    const tasks = await UploadSchedule.getTasks(findObj);
 
     return res.status(200).json({
       message: "Schedule Tasks fetched successfully",
@@ -523,19 +538,19 @@ const listProcessedSchedule = async (req, res, next) => {
   try {
     // Get the token parameters
     let { companyCode } = req.user;
-    let { itemCode, month, year } = req.body;
+    let { statusOption, month, year } = req.body;
 
     let findObj = { companyCode };
 
-    if (itemCode) {
-      findObj["itemCode"] = itemCode;
+    if ((statusOption || statusOption == 0) && statusOption != -1) {
+      findObj["paymentStatus"] = statusOption;
     }
 
     if (month) {
       findObj["month"] = month;
     }
 
-    if (year) {
+    if (year && year != "All years") {
       findObj["year"] = year;
     }
 

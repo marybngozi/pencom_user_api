@@ -56,7 +56,7 @@ const listSchedule = async (req, res, next) => {
 };
 
 const listProcessedScheduleSchema = Joi.object({
-  itemCode: Joi.any(),
+  statusOption: Joi.any(),
   month: Joi.any(),
   year: Joi.any(),
 });
