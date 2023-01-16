@@ -32,13 +32,35 @@ eventHandler.on("validateUpload", async (task) => {
   let status = "failure";
 
   if (isValid) {
-    (data = outputData), (status = "success");
+    data = outputData;
+    status = "success";
   }
   // update task to success
   await UploadSchedule.updateTask(task.id, status);
 
   // build excel with the ouptut data
   await createExcel(data, uploadData.filePath);
+
+  /********************* SEND NOTIFICATION THAT THE VERIFICATION IS DONE *************/
+  // make an object for the email template
+  const emailData = {
+    year: moment().format("YYYY"),
+    userNames: uploadData.companyName,
+    monthPaid: moment()
+      .month(uploadData.month - 1)
+      .format("MMMM"),
+    yearPaid: uploadData.year,
+    scheduleUrl: uploadData.scheduleUrl,
+    status1: isValid ? "is now ready for processing" : "requires modification",
+    status2: isValid ? "continue the process" : "review the schedule",
+  };
+
+  const message = MakeEmailTemplate("scheduleVerified.html", emailData);
+
+  const subject = `Pencom Schedule Status`;
+
+  // send email notification
+  sendMail(uploadData.email, message, subject);
 });
 
 const listSchedule = async (req, res, next) => {
@@ -219,8 +241,8 @@ const summarizeSchedule = async (req, res, next) => {
 const uploadScheduleExcel = async (req, res, next) => {
   try {
     // Get the token parameters
-    let { agentId, companyCode } = req.user;
-    let { itemCode, month, year } = req.body;
+    let { agentId, companyCode, companyName, email } = req.user;
+    let { itemCode, month, year, scheduleUrl } = req.body;
 
     if (!itemCode) throw new NotFoundError("Item must be provided");
     if (!month) throw new NotFoundError("Month must be provided");
@@ -234,8 +256,11 @@ const uploadScheduleExcel = async (req, res, next) => {
     uploadData.month = month;
     uploadData.year = year;
     uploadData.companyCode = companyCode;
+    uploadData.companyName = companyName;
+    uploadData.email = email;
     uploadData.agentId = agentId;
     uploadData.filePath = filePath;
+    uploadData.scheduleUrl = scheduleUrl;
 
     // log the validation task in the database
     const validationTask = await UploadSchedule.createTask({
@@ -245,6 +270,23 @@ const uploadScheduleExcel = async (req, res, next) => {
       month,
       year,
     });
+
+    // make an object for the email template
+    const emailData = {
+      year: moment().format("YYYY"),
+      userNames: companyName,
+      monthPaid: moment()
+        .month(month - 1)
+        .format("MMMM"),
+      yearPaid: year,
+    };
+
+    const message = MakeEmailTemplate("scheduleReceived.html", emailData);
+
+    const subject = `Pencom Schedule Verification`;
+
+    // send email notification
+    sendMail(email, message, subject);
 
     // background review the schedule upload, emit the event for validation
     eventHandler.emit("validateUpload", validationTask);
@@ -358,8 +400,6 @@ const uploadSchedule = async (req, res, next) => {
       return acc + obj.amount;
     }, 0);
 
-    console.log(scheduleTotal);
-
     req.body.payDetails = {
       amount: scheduleTotal,
       itemCode: task.itemCode,
@@ -367,17 +407,8 @@ const uploadSchedule = async (req, res, next) => {
       month: task.month,
       year: task.year,
     };
-
+    /* GO TO PROCESS SCHEDULE */
     next();
-
-    // return res.status(200).json({
-    //   message: "Schedule uploaded successfully",
-    //   meta: {
-    //     currentPage: 1,
-    //     pageSize: 1,
-    //     pageTotal: 1,
-    //   },
-    // });
   } catch (e) {
     logger.error(JSON.stringify({ "scheduleController-scheduleStatus": e }));
     next(e);
@@ -401,7 +432,9 @@ const processSchedule = async (req, res, next) => {
     });
 
     if (paymentBooked)
-      throw new BadRequestError("Payment with same data already booked before");
+      throw new BadRequestError(
+        "Schedule with same data already booked before"
+      );
 
     // add payDetails to Processed Schedule table
     const processed = await ProcessedSchedule.addProcessedSchedule({
@@ -441,13 +474,14 @@ const processSchedule = async (req, res, next) => {
     // set the payData records in Schedule Schedule table as processed
     await UploadSchedule.updateProcessed(dataArr);
 
-    // get the itemName for the mandate
-    const itemDetails = await Item.findItem(payDetails.itemCode);
-    const itemName = itemDetails ? itemDetails.itemName : "";
-
     // get the QR code for the mandate
     const scheduleUrl = await QRCode.toDataURL(
       `${payDetails.scheduleUrl}/${processed.invoiceNo}`
+    );
+
+    // get the mandate summary
+    let mandateSummary = await UploadSchedule.processSumCountMandate(
+      processed.invoiceNo
     );
 
     // make an object for the mandate template
@@ -455,15 +489,12 @@ const processSchedule = async (req, res, next) => {
       scheduleUrl: scheduleUrl,
       todayDate: moment().format("Do-MMM-YYYY"),
       userNames: companyName,
-      userEmail: payDetails.email,
-      stateValidationID: companyCode,
-      itemName: itemName,
-      custReference: processed.invoiceNo,
+      companyCode: companyCode,
+      invoiceNo: processed.invoiceNo,
       amount: payDetails.amount,
-      itemCode: payDetails.itemCode,
-      monthPaid: payDetails.month,
+      monthPaid: moment().month(payDetails.month).format("MMMM"),
       yearPaid: payDetails.year,
-      paymentStatus: "Not Paid",
+      items: mandateSummary,
     };
 
     const message = MakeEmailTemplate("mandate.html", mandateData);
@@ -474,7 +505,7 @@ const processSchedule = async (req, res, next) => {
     sendMail(email, message, subject);
 
     return res.status(200).json({
-      message: "Payment Processed Successful",
+      message: "Schedule Processed Successful",
       data: processed.invoiceNo,
       meta: {
         currentPage: 1,

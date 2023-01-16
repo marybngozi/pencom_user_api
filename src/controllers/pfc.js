@@ -29,7 +29,7 @@ const unRemittedContributions = async (req, res, next) => {
 
     if (company && company != "all") findObj["companyCode"] = company;
 
-    const contributions = await Item.getBatchContributionsPfa(findObj);
+    const contributions = await Item.getPfaBatchContributions(findObj);
 
     return res.status(200).json({
       message: "Contributions fetched successfully",
@@ -41,7 +41,7 @@ const unRemittedContributions = async (req, res, next) => {
       },
     });
   } catch (e) {
-    console.log("pfcController-listBatchContributions", e);
+    console.log("pfcController-unRemittedContributions", e);
     next(e);
   }
 };
@@ -50,31 +50,28 @@ const listBatchContributions = async (req, res, next) => {
   try {
     // Get the token parameters
     let { id: agentId, userType } = req.user;
-    let { company, dateStart, dateEnd } = req.body;
+    let { company, dateStart, dateEnd, month, year, searchTerm } = req.body;
 
     // when only one date is provided, send error, the both dates must be provided
     if ((!dateStart && dateEnd) || (dateStart && !dateEnd)) {
       throw new BadRequestError("Both dates or none must be provided");
     }
 
-    // Get the monthly data
-    const year = new Date().getFullYear();
-    const month = new Date().getMonth();
-
-    let startDate = new Date(year, month);
-    let endDate = new Date(year, month + 1, 1);
+    let findObj = { agentId, userType };
 
     if (dateStart && dateEnd) {
       // use provided Date duration
-      startDate = new Date(dateStart);
-      endDate = new Date(dateEnd);
-
+      const startDate = new Date(dateStart);
+      let endDate = new Date(dateEnd);
       // Adds one day to adjust search
       endDate.setDate(endDate.getDate() + 1);
+
+      findObj["createdAt"] = { $gte: startDate, $lte: endDate };
     }
 
-    let findObj = { startDate, endDate, agentId };
     if (company && company != "all") findObj["companyCode"] = company;
+    if (month && month != "All months") findObj["month"] = month;
+    if (year && year != "All years") findObj["year"] = year;
 
     const contributions = await Item.getBatchContributionsPfc(findObj);
 
@@ -193,8 +190,6 @@ const transmitContributions = async (req, res, next) => {
     let { pfaCode, companyCode, batchId } = req.body;
 
     const transmitted = await Item.updateTransmit({
-      batchId,
-      companyCode,
       agentId,
       pfaCode,
     });

@@ -109,7 +109,7 @@ const getAllProcessedSchedule = async (findObj) => {
       deletedAt: 0,
       deleted: false,
     }
-  ).sort({ amount: "asc" });
+  ).sort({ createdAt: -1 });
 };
 
 const getAllProcessedScheduleItems = async (

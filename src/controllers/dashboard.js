@@ -115,7 +115,7 @@ const pinkBox = async (req, res, next) => {
     // Get the token parameters
     let { id: agentId, userType, companyCode, rsaPin } = req.user;
 
-    let { month } = req.body;
+    let { month, year } = req.body;
 
     let count = 0;
     const searchBody = {};
@@ -123,8 +123,8 @@ const pinkBox = async (req, res, next) => {
     if (userType == 100) {
       /************* COMPANY *************/
       searchBody["companyCode"] = companyCode;
-      searchBody["year"] = new Date().getFullYear();
-      searchBody["month"] = month ? month : new Date().getMonth(); //cos js month is less than 1
+      searchBody["year"] = year ? year : new Date().getFullYear();
+      if (month) searchBody["month"] = month ? month : new Date().getMonth();
       count = await UploadSchedule.countStaff4Month(searchBody);
     } else if (userType <= 300) {
       /************* STAFF *************/
@@ -157,14 +157,13 @@ const grayBox = async (req, res, next) => {
     // Get the token parameters
     let { id: agentId, userType, companyCode, rsaPin } = req.user;
 
-    let { month, contributionType, viewOption } = req.body;
-    let year = new Date().getFullYear();
-    month = month ? month : new Date().getMonth(); //cos js month is less than 1
+    let { month, year, contributionType, viewOption } = req.body;
+    month = month || month == 0 ? month : new Date().getMonth(); //cos js month is less than 1
 
     let data1 = 0;
     let data2 = 0;
     const searchBody = {
-      year: year,
+      year: year ? year : new Date().getFullYear(),
     };
 
     if (userType == 100) {
@@ -173,8 +172,7 @@ const grayBox = async (req, res, next) => {
       /* Get the sum for the year */
       data2 = await UploadSchedule.sumAll(searchBody);
       data2 = data2[contributionType];
-      searchBody["month"] = month == 0 ? 12 : month;
-      searchBody["year"] = month == 0 ? year - 1 : year;
+      if (month) searchBody["month"] = month;
       /* Get the sum for the month */
       data1 = await UploadSchedule.sumAll(searchBody);
       data1 = data1[contributionType];
@@ -186,8 +184,7 @@ const grayBox = async (req, res, next) => {
       /* Get the sum for the year */
       data2 = await UploadSchedule.sumAll(searchBody);
       data2 = data2[contributionType];
-      searchBody["month"] = month == 0 ? 12 : month;
-      searchBody["year"] = month == 0 ? year - 1 : year;
+      if (month) searchBody["month"] = month;
       /* Get the sum for the month */
       data1 = await UploadSchedule.sumAll(searchBody);
       data1 = data1[contributionType];
@@ -198,8 +195,7 @@ const grayBox = async (req, res, next) => {
       searchBody["userType"] = userType;
       searchBody["agentId"] = agentId;
       data2 = await Item.sumAll(searchBody);
-      searchBody["month"] = month == 0 ? 12 : month;
-      searchBody["year"] = month == 0 ? year - 1 : year;
+      if (month) searchBody["month"] = month;
       /* Get the sum for the month */
       data1 = await Item.sumAll(searchBody);
     } else if (userType == 500) {
@@ -209,17 +205,19 @@ const grayBox = async (req, res, next) => {
       searchBody["userType"] = userType;
       searchBody["agentId"] = agentId;
       if (contributionType == "date") {
+        console.log("date body", searchBody);
         data2 = await Item.sumAll(searchBody);
-        searchBody["month"] = month == 0 ? 12 : month;
-        searchBody["year"] = month == 0 ? year - 1 : year;
+        if (month) searchBody["month"] = month;
         /* Get the sum for the month */
         data1 = await Item.sumAll(searchBody);
       } else {
-        delete searchBody.year;
-        searchBody["month"] = month == 0 ? 12 : month;
+        if (month) searchBody["month"] = month;
         /* Get all the sum for the group */
+        console.log("group body", searchBody);
         const data = await Item.sumAllGroup(searchBody);
+
         /* separate into tthe types */
+        console.log("group data", data);
         data1 = data["employerNormalContribution"];
         data2 = data["employeeNormalContribution"];
       }

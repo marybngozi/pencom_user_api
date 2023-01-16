@@ -19,10 +19,34 @@ const walletPayment = async (req, res, next) => {
   }
 };
 
+const unremittedContributionsSchema = Joi.object({
+  company: Joi.any(),
+  dateStart: Joi.any(),
+  dateEnd: Joi.any(),
+});
+
+const unremittedContributions = async (req, res, next) => {
+  try {
+    await unremittedContributionsSchema.validateAsync(req.body, {
+      abortEarly: true,
+    });
+    next();
+  } catch (err) {
+    console.log("unremittedContributionsValidator", err.message);
+    return res.status(400).json({
+      message: err.message,
+      errorCode: "V400",
+    });
+  }
+};
+
 const listBatchContributionsSchema = Joi.object({
   company: Joi.any(),
   dateStart: Joi.any(),
   dateEnd: Joi.any(),
+  year: Joi.any(),
+  month: Joi.any(),
+  searchTerm: Joi.any(),
 });
 
 const listBatchContributions = async (req, res, next) => {
@@ -60,9 +84,29 @@ const listContributionItems = async (req, res, next) => {
     });
   }
 };
+const transmitContributionsSchema = Joi.object({
+  pfaCode: Joi.string().required(),
+});
+
+const transmitContributions = async (req, res, next) => {
+  try {
+    await transmitContributionsSchema.validateAsync(req.body, {
+      abortEarly: true,
+    });
+    next();
+  } catch (err) {
+    console.log("transmitContributionsValidator", err.message);
+    return res.status(400).json({
+      message: err.message,
+      errorCode: "V400",
+    });
+  }
+};
 
 module.exports = {
   walletPayment,
+  unremittedContributions,
   listBatchContributions,
   listContributionItems,
+  transmitContributions,
 };

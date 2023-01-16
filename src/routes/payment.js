@@ -22,8 +22,8 @@ module.exports = () => {
   api.post(
     "/get-unremit-contribution",
     authenticate,
-    validator.listBatchContributions,
-    pfcController.listBatchContributions
+    validator.unremittedContributions,
+    pfcController.unRemittedContributions
   );
 
   // get the batch contributions for a PFC or PFA
@@ -54,7 +54,7 @@ module.exports = () => {
   api.post(
     "/transmit-contributions",
     authenticate,
-    validator.listContributionItems,
+    validator.transmitContributions,
     pfcController.transmitContributions
   );
 

@@ -58,6 +58,9 @@ const documentSchema = new Schema(
     companyCode: {
       type: String,
     },
+    pfaCode: {
+      type: String,
+    },
     rsaPin: {
       type: String,
     },

@@ -212,10 +212,26 @@ const sumCountAllByMonth = async (body) => {
       },
     },
     {
+      $lookup: {
+        from: "users", // collection name in db
+        localField: "companyCode",
+        foreignField: "companyCode",
+        as: "company",
+      },
+    },
+    {
+      $set: {
+        company: {
+          $arrayElemAt: ["$company.companyName", 0],
+        },
+      },
+    },
+    {
       $group: {
         _id: "$month",
         staffCount: { $count: {} },
         amount: { $sum: "$amount" },
+        company: { $max: "$company" },
         month: { $max: "$month" },
         createdAt: { $max: "$createdAt" },
       },
@@ -659,7 +675,7 @@ const getTasks = async ({ agentId }) => {
     agentId,
   };
 
-  return await UploadTask.find(findObj);
+  return await UploadTask.find(findObj).sort({ createdAt: -1 });
 };
 
 const updateTask = async (id, status) => {

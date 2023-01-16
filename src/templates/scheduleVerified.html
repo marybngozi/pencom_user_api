@@ -77,7 +77,7 @@
                         color: #252a2f;
                       "
                     >
-                      Hello, Appmart Integrated Limited
+                      Hello, {{username}}
                     </td>
                   </tr>
                   <tr>
@@ -104,7 +104,7 @@
                         height: 90px;
                       "
                     >
-                      May, 2022
+                      {{monthPaid}}, {{yearPaid}}
                     </td>
                   </tr>
                   <tr>
@@ -112,7 +112,7 @@
                       class="center"
                       style="font-size: 20px; line-height: 26px; color: #5e6974"
                     >
-                      has been verified and is now ready for processing.
+                      has been verified and {{status1}}.
                     </td>
                   </tr>
                   <tr>
@@ -120,14 +120,14 @@
                       class="center"
                       style="font-size: 20px; line-height: 26px; color: #5e6974"
                     >
-                      Click the button below to continue the process.
+                      Click the button below to {{status2}}.
                     </td>
                   </tr>
 
                   <tr>
                     <td style="height: 100px">
                       <a
-                        href="https://appmart.ng/"
+                        href="{{scheduleUrl}}"
                         target="_blank"
                         style="
                           display: block;
@@ -135,12 +135,12 @@
                           box-sizing: border-box;
                           width: 300px;
                           height: 76px;
-                          background: #e3e3e3;
+                          background: #053a51;
                           border-radius: 12px;
                           font-weight: 600;
                           font-size: 20px;
                           line-height: 26px;
-                          color: #252a2f;
+                          color: #ffffff;
                           margin: auto;
                           text-decoration: none;
                           text-align: center;

@@ -29,7 +29,7 @@ const addContributions = async (contributions) => {
   return await PfcContribution.create(contributions);
 };
 
-const getBatchContributionsPfa = async (body) => {
+const getPfaBatchContributions = async (body) => {
   const pfcx = await Pfc.findOne(
     {
       userId: body.agentId,
@@ -78,15 +78,9 @@ const getBatchContributionsPfa = async (body) => {
     },
     {
       $group: {
-        _id: "$pfaCode",
-        itemCount: {
-          $count: "{}",
-        },
-        month: {
-          $first: "$month",
-        },
-        year: {
-          $first: "$year",
+        _id: {
+          pfaCode: "$pfaCode",
+          companyCode: "$companyCode",
         },
         pfaName: {
           $first: "$pfaName",
@@ -94,14 +88,25 @@ const getBatchContributionsPfa = async (body) => {
         amount: {
           $sum: "$amount",
         },
-        createdAt: {
-          $first: "$createdAt",
+      },
+    },
+    {
+      $group: {
+        _id: "$_id.pfaCode",
+        itemCount: {
+          $count: {},
+        },
+        pfaName: {
+          $first: "$pfaName",
+        },
+        amount: {
+          $sum: "$amount",
         },
       },
     },
     {
       $sort: {
-        createdAt: -1,
+        pfaName: 1,
       },
     },
   ]);
@@ -109,33 +114,40 @@ const getBatchContributionsPfa = async (body) => {
   return contributions;
 };
 
-const getBatchContributionsPfc = async ({
-  companyCode,
-  startDate,
-  endDate,
-}) => {
-  const findObj = {
-    deleted: false,
-  };
+const getBatchContributionsPfc = async (body) => {
+  if (body.userType == 400) {
+    const pfcx = await Pfc.findOne(
+      {
+        userId: body.agentId,
+        deleted: false,
+      },
+      {
+        id: 1,
+      }
+    );
 
-  if (companyCode) {
-    findObj["companyCode"] = companyCode;
+    body["pfcId"] = mongoose.Types.ObjectId(pfcx.id);
+  } else {
+    const pfax = await Pfa.findOne(
+      {
+        userId: body.agentId,
+        deleted: false,
+      },
+      {
+        pfaCode: 1,
+      }
+    );
+
+    body["pfaCode"] = pfax.pfaCode;
+    body["transmitted"] = true;
   }
 
-  const pfcx = await Pfc.findOne(
-    {
-      userId: agentId,
-    },
-    {
-      id: 1,
-    }
-  );
-
-  findObj["pfcId"] = mongoose.Types.ObjectId(pfcx.id);
+  delete body.agentId;
+  delete body.userType;
 
   const contributions = await PfcContribution.aggregate([
     {
-      $match: { ...findObj, createdAt: { $gte: startDate, $lte: endDate } },
+      $match: { ...body, deleted: false },
     },
     {
       $lookup: {
@@ -229,6 +241,7 @@ const getContributionPfas = async (
   const pfcx = await Pfc.findOne(
     {
       userId: agentId,
+      deleted: false,
     },
     {
       id: 1,
@@ -479,11 +492,11 @@ const buildContributionPfas = async ({ companyCode, batchId, agentId }) => {
     PFA: null,
     "STAFF NAME": null,
     "RSA PIN": null,
-    AMOUNT: null,
     "EMPLOYEE NORMAL CONTRIBUTION": null,
     "EMPLOYER NORMAL CONTRIBUTION": null,
     "EMPLOYEE VOLUNTARY CONTRIBUTION": null,
     "EMPLOYER VOLUNTARY CONTRIBUTION": null,
+    AMOUNT: null,
     MONTH: null,
     YEAR: null,
   };
@@ -491,11 +504,11 @@ const buildContributionPfas = async ({ companyCode, batchId, agentId }) => {
   const excelData = [];
   const grandTotal = {
     PFA: "GRAND TOTAL",
-    AMOUNT: 0,
     "EMPLOYEE NORMAL CONTRIBUTION": 0,
     "EMPLOYER NORMAL CONTRIBUTION": 0,
     "EMPLOYEE VOLUNTARY CONTRIBUTION": 0,
     "EMPLOYER VOLUNTARY CONTRIBUTION": 0,
+    AMOUNT: 0,
   };
 
   // add pfas
@@ -508,13 +521,13 @@ const buildContributionPfas = async ({ companyCode, batchId, agentId }) => {
     for (const item of pfa.schedules) {
       eIR["STAFF NAME"] = item.firstName + " " + item.lastName;
       eIR["RSA PIN"] = item.rsaPin;
-      eIR["AMOUNT"] = item.amount;
       eIR["EMPLOYER NORMAL CONTRIBUTION"] = item.employerNormalContribution;
       eIR["EMPLOYEE NORMAL CONTRIBUTION"] = item.employeeNormalContribution;
       eIR["EMPLOYEE VOLUNTARY CONTRIBUTION"] =
         item.employeeVoluntaryContribution;
       eIR["EMPLOYER VOLUNTARY CONTRIBUTION"] =
         item.employerVoluntaryContribution;
+      eIR["AMOUNT"] = item.amount;
       eIR["MONTH"] = moment()
         .set("month", Number(item.month) - 1)
         .format("MMMM");
@@ -530,11 +543,11 @@ const buildContributionPfas = async ({ companyCode, batchId, agentId }) => {
 
     // add the pfa totals
     eIR["PFA"] = "TOTAL";
-    eIR["AMOUNT"] = pfa.amount;
     eIR["EMPLOYER NORMAL CONTRIBUTION"] = pfa.employerNormalContribution;
     eIR["EMPLOYEE NORMAL CONTRIBUTION"] = pfa.employeeNormalContribution;
     eIR["EMPLOYEE VOLUNTARY CONTRIBUTION"] = pfa.employeeVoluntaryContribution;
     eIR["EMPLOYER VOLUNTARY CONTRIBUTION"] = pfa.employerVoluntaryContribution;
+    eIR["AMOUNT"] = pfa.amount;
 
     excelData.push({ ...eIR });
 
@@ -544,7 +557,6 @@ const buildContributionPfas = async ({ companyCode, batchId, agentId }) => {
     });
 
     // add totals to grand total
-    grandTotal["AMOUNT"] += pfa.amount;
     grandTotal["EMPLOYER NORMAL CONTRIBUTION"] +=
       pfa.employerNormalContribution;
     grandTotal["EMPLOYEE NORMAL CONTRIBUTION"] +=
@@ -553,6 +565,7 @@ const buildContributionPfas = async ({ companyCode, batchId, agentId }) => {
       pfa.employeeVoluntaryContribution;
     grandTotal["EMPLOYER VOLUNTARY CONTRIBUTION"] +=
       pfa.employerVoluntaryContribution;
+    grandTotal["AMOUNT"] += pfa.amount;
   }
 
   excelData.push(grandTotal);
@@ -619,11 +632,11 @@ const buildContributionItem = async ({ companyCode, pfaCode, batchId }) => {
   const eIR = {
     "STAFF NAME": null,
     "RSA PIN": null,
-    AMOUNT: null,
     "EMPLOYEE NORMAL CONTRIBUTION": null,
     "EMPLOYER NORMAL CONTRIBUTION": null,
     "EMPLOYEE VOLUNTARY CONTRIBUTION": null,
     "EMPLOYER VOLUNTARY CONTRIBUTION": null,
+    AMOUNT: null,
     MONTH: null,
     YEAR: null,
   };
@@ -631,22 +644,22 @@ const buildContributionItem = async ({ companyCode, pfaCode, batchId }) => {
   const excelData = [];
   const grandTotal = {
     "STAFF NAME": "GRAND TOTAL",
-    AMOUNT: 0,
     "EMPLOYEE NORMAL CONTRIBUTION": 0,
     "EMPLOYER NORMAL CONTRIBUTION": 0,
     "EMPLOYEE VOLUNTARY CONTRIBUTION": 0,
     "EMPLOYER VOLUNTARY CONTRIBUTION": 0,
+    AMOUNT: 0,
   };
 
   // add schedules
   for (const item of contributions) {
     eIR["STAFF NAME"] = item.staffName;
     eIR["RSA PIN"] = item.rsaPin;
-    eIR["AMOUNT"] = item.amount;
     eIR["EMPLOYER NORMAL CONTRIBUTION"] = item.employerNormalContribution;
     eIR["EMPLOYEE NORMAL CONTRIBUTION"] = item.employeeNormalContribution;
     eIR["EMPLOYEE VOLUNTARY CONTRIBUTION"] = item.employeeVoluntaryContribution;
     eIR["EMPLOYER VOLUNTARY CONTRIBUTION"] = item.employerVoluntaryContribution;
+    eIR["AMOUNT"] = item.amount;
     eIR["MONTH"] = moment()
       .set("month", Number(item.month) - 1)
       .format("MMMM");
@@ -676,26 +689,22 @@ const buildContributionItem = async ({ companyCode, pfaCode, batchId }) => {
   return excelData;
 };
 
-const updateTransmit = async ({ companyCode, pfaCode, batchId, agentId }) => {
+const updateTransmit = async ({ pfaCode, agentId }) => {
   const findObj = {
     deleted: false,
-    batchId,
-    companyCode,
+    transmitted: false,
+    pfaCode: pfaCode,
   };
 
-  if (pfaCode) {
-    findObj["pfaCode"] = pfaCode;
-  } else {
-    const pfcx = await Pfc.findOne(
-      {
-        userId: agentId,
-      },
-      {
-        id: 1,
-      }
-    );
-    findObj["pfcId"] = mongoose.Types.ObjectId(pfcx.id);
-  }
+  const pfcx = await Pfc.findOne(
+    {
+      userId: agentId,
+    },
+    {
+      id: 1,
+    }
+  );
+  findObj["pfcId"] = mongoose.Types.ObjectId(pfcx.id);
 
   return await PfcContribution.updateMany(findObj, {
     transmitted: true,
@@ -1022,7 +1031,7 @@ module.exports = {
   findItem,
   getAllStates,
   addContributions,
-  getBatchContributionsPfa,
+  getPfaBatchContributions,
   getBatchContributionsPfc,
   getContributionPfas,
   getContributionItems,
