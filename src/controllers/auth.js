@@ -1,6 +1,9 @@
+const fs = require("fs");
 const User = require("../data/user");
+const { getUserProfile } = require("../data/uploadSchedule");
 const Verify = require("../data/accountVerify");
 const jwt = require("../utils/jwt");
+const logger = require("../utils/logger");
 const MakeEmailTemplate = require("../utils/makeEmailTemplate");
 const { sendMail, validateEmail } = require("../utils/notification");
 const { validateRSAPin } = require("../utils/apiValidation");
@@ -359,6 +362,89 @@ const getStaff = async (req, res, next) => {
   }
 };
 
+const getProfile = async (req, res, next) => {
+  try {
+    let { companyCode } = req.user;
+
+    const data = await getUserProfile({ companyCode });
+
+    return res.status(200).json({
+      message: "Fetched successful!",
+      data: data,
+      meta: {
+        currentPage: 1,
+        pageSize: 1,
+        pageTotal: 1,
+      },
+    });
+  } catch (e) {
+    console.log("authController-getProfile", e);
+    next(e);
+  }
+};
+
+const updateProfile = async (req, res, next) => {
+  try {
+    // Get the token parameters
+    let { agentId, userType } = req.user;
+    let {
+      firstName,
+      lastName,
+      otherName,
+      companyName,
+      city,
+      address,
+      state,
+      phone,
+    } = req.body;
+
+    if (!companyName && !firstName)
+      throw new NotFoundError("Name must be provided");
+    if (!city) throw new NotFoundError("City must be provided");
+    if (!address) throw new NotFoundError("Address must be provided");
+    if (!state) throw new NotFoundError("State must be provided");
+    if (!phone) throw new NotFoundError("Phone must be provided");
+
+    const userUpdate = {
+      city,
+      phone,
+      address,
+      state,
+    };
+
+    if (userType == 200 || userType == 300) {
+      userUpdate.firstName = firstName;
+      userUpdate.lastName = lastName;
+      userUpdate.otherName = otherName;
+    } else {
+      userUpdate.companyName = companyName;
+    }
+
+    /* check if there is file, update it and remove the old one */
+    const fileName = req.file ? req.file.filename : null;
+
+    let user = await User.getUserById(agentId);
+
+    if (user.logo && fileName) {
+      const filePath = __basedir + "/public/logos/" + user.logo;
+      fs.unlink(filePath, () => {
+        logger.info(`authController.updateProfile: file ${filePath} deleted`);
+      });
+    }
+
+    if (fileName) userUpdate.logo = fileName;
+
+    user = await User.updateDetails(agentId, userUpdate);
+    return res.status(201).json({
+      message: "Updated successfully!",
+      data: user,
+    });
+  } catch (e) {
+    console.log("authController-updateProfile", e);
+    next(e);
+  }
+};
+
 module.exports = {
   login,
   registerCompany,
@@ -369,4 +455,6 @@ module.exports = {
   resetPassword,
   changePassword,
   getStaff,
+  getProfile,
+  updateProfile,
 };

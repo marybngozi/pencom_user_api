@@ -520,7 +520,7 @@ const processSchedule = async (req, res, next) => {
     sendMail(email, message, subject);
 
     return res.status(200).json({
-      message: "Schedule Processed Successful",
+      message: "Schedule Processed Successfully",
       data: processed.invoiceNo,
       meta: {
         currentPage: 1,

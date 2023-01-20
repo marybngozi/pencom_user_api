@@ -3,8 +3,6 @@ const moment = require("moment");
 const { ProcessedScheduleItem } = require("../models/processedScheduleItem");
 const { UploadSchedule } = require("../models/uploadSchedule");
 const { UploadTask } = require("../models/uploadTask");
-const { Pfa } = require("../models/pfa");
-const { Pfc } = require("../models/pfc");
 const PAGESIZE = 10;
 
 const addSchedules = async (schedules) => {
@@ -889,6 +887,42 @@ const processSumCountItems = async (invoiceNo) => {
   return items;
 };
 
+const getUserProfile = async (body) => {
+  const batchAll = await UploadSchedule.distinct("uploadBatchId", {
+    ...body,
+    deleted: false,
+  });
+
+  const batchAllPaid = await UploadSchedule.distinct("uploadBatchId", {
+    ...body,
+    paid: 1,
+    deleted: false,
+  });
+
+  const totalProcessed = await UploadSchedule.aggregate([
+    {
+      $match: {
+        ...body,
+        deleted: false,
+      },
+    },
+    {
+      $group: {
+        _id: null,
+        amount: {
+          $sum: "$amount",
+        },
+      },
+    },
+  ]);
+
+  return {
+    countAll: batchAll.length,
+    countPaid: batchAllPaid.length,
+    totalProcessed: totalProcessed.length ? totalProcessed[0].amount : 0,
+  };
+};
+
 module.exports = {
   addSchedules,
   sumAll,
@@ -916,4 +950,5 @@ module.exports = {
   processSumCountItems,
   sumCountAllByMonth,
   getUnpaidUploadsExcel,
+  getUserProfile,
 };

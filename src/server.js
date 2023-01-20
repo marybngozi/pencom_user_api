@@ -28,34 +28,6 @@ app.use(cors());
 // connect to db
 initDB();
 
-/* for logging purpose */
-
-// You can set morgan to log differently depending on your environment
-/* if (app.get("env") == "production") {
-  // log only 5xx responses to console
-  app.use(
-    morgan("dev", {
-      skip: function (req, res) {
-        return res.statusCode < 500;
-      },
-    })
-  );
-
-  const logName = moment().format("DD_MMM_YYYY");
-  app.use(
-    morgan(
-      ":remote-addr - :remote-user [:date[iso]] ':method :url HTTP/:http-version' :status :res[content-length] ':referrer' ':user-agent'",
-      {
-        stream: fs.createWriteStream(
-          path.join(__dirname, `../logs/${logName}.log`),
-          { flags: "a" }
-        ),
-      }
-    )
-  );
-} else {
-  app.use(morgan("dev"));
-} */
 // Add the morgan middleware
 app.use(morganMiddleware);
 

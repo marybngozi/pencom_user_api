@@ -79,7 +79,10 @@ const adminStaffInvite = async (req, res, next) => {
       );
 
     /* Check if the staff already exists for the comapny  */
-    const staffExist = await CompanyValidation.getAdminStaff(staff.id);
+    const staffExist = await CompanyValidation.getAdminStaff(
+      staff.id,
+      companyCode
+    );
     if (staffExist)
       throw new BadRequestError("Staff is already a Sub-Admin of the company!");
 

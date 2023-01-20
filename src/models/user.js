@@ -52,6 +52,9 @@ const documentSchema = new Schema(
     companyName: {
       type: String,
     },
+    logo: {
+      type: String,
+    },
     companyRc: {
       type: String,
     },

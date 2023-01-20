@@ -5,6 +5,7 @@ const authController = require("../controllers/auth");
 const companyValidationController = require("../controllers/companyValidation");
 const validator = require("../validators/auth");
 const { authenticate, accountValidate } = require("../middlewares");
+const { uploadImage } = require("../middlewares/upload");
 
 module.exports = () => {
   // ----------Auth specific routes --------------
@@ -117,6 +118,17 @@ module.exports = () => {
     accountValidate,
     validator.makeAdminStaff,
     companyValidationController.removeCompanyStaffs
+  );
+
+  /* get profile details */
+  api.get("/profile", authenticate, authController.getProfile);
+
+  /* update profile details */
+  api.post(
+    "/profile",
+    authenticate,
+    uploadImage.single("logoUpload"),
+    authController.updateProfile
   );
 
   return api;

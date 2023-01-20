@@ -51,6 +51,7 @@ const updateDetails = async (id, data) => {
     new: true,
   });
 
+  updateUser.password = null;
   return updateUser;
 };
 
@@ -66,6 +67,7 @@ const updateAccountStatus = async (email) => {
     }
   );
 
+  user.password = null;
   return user;
 };
 
@@ -124,6 +126,31 @@ const getAllPfcs = async () => {
   return pfcs;
 };
 
+const updateUserProfile = async (body) => {
+  const totalProcessed = await User.aggregate([
+    {
+      $match: {
+        ...body,
+        deleted: false,
+      },
+    },
+    {
+      $group: {
+        _id: null,
+        amount: {
+          $sum: "$amount",
+        },
+      },
+    },
+  ]);
+
+  return {
+    countAll: batchAll.length,
+    countPaid: batchAllPaid.length,
+    totalProcessed: totalProcessed.length ? totalProcessed[0].amount : 0,
+  };
+};
+
 module.exports = {
   createUser,
   getUserById,
@@ -136,4 +163,5 @@ module.exports = {
   getPfa,
   getAllPfcs,
   getPfc,
+  updateUserProfile,
 };
