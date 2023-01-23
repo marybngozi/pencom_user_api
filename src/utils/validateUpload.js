@@ -68,7 +68,6 @@ const validateUploads = async (payload) => {
         requiredFields[key].slug == "pfaCode" &&
         pfaCodes.indexOf(`${val}`) < 0
       ) {
-        console.log(val, typeof val);
         // if the PFA is invalid
         errorMsg += `${key} is invalid. `;
         isValid = false;

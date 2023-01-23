@@ -205,7 +205,6 @@ const grayBox = async (req, res, next) => {
       searchBody["userType"] = userType;
       searchBody["agentId"] = agentId;
       if (contributionType == "date") {
-        console.log("date body", searchBody);
         data2 = await Item.sumAll(searchBody);
         if (month) searchBody["month"] = month;
         /* Get the sum for the month */
@@ -213,11 +212,9 @@ const grayBox = async (req, res, next) => {
       } else {
         if (month) searchBody["month"] = month;
         /* Get all the sum for the group */
-        console.log("group body", searchBody);
         const data = await Item.sumAllGroup(searchBody);
 
         /* separate into tthe types */
-        console.log("group data", data);
         data1 = data["employerNormalContribution"];
         data2 = data["employeeNormalContribution"];
       }

@@ -99,7 +99,6 @@ const getProcessedSchedule = async (
 };
 
 const getAllProcessedSchedule = async (findObj) => {
-  console.log(findObj);
   return ProcessedSchedule.find(
     {
       deleted: false,
