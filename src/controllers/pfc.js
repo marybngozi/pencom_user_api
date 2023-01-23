@@ -152,7 +152,7 @@ const downloadContributions = async (req, res, next) => {
 
     const fileName = `${Date.now()}-pfccontributions.xlsx`;
     const filePath = path.join(
-      __basedir + "/public/uploads/schedule",
+      __basedir + "../public/uploads/schedule",
       fileName
     );
     await createExcel(contributions, filePath);

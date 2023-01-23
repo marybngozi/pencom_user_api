@@ -1,4 +1,5 @@
 const fs = require("fs");
+const path = require("path");
 const User = require("../data/user");
 const { getUserProfile } = require("../data/uploadSchedule");
 const Verify = require("../data/accountVerify");
@@ -426,7 +427,7 @@ const updateProfile = async (req, res, next) => {
     let user = await User.getUserById(agentId);
 
     if (user.logo && fileName) {
-      const filePath = __basedir + "/public/logos/" + user.logo;
+      const filePath = path.join(__basedir, "../public/logos/", user.logo);
       fs.unlink(filePath, () => {
         logger.info(`authController.updateProfile: file ${filePath} deleted`);
       });

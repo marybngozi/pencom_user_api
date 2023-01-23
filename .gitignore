@@ -3,8 +3,8 @@ node_modules
 .vscode
 *.log
 .env
-src/public/uploads/schedule/*.xlsx
-src/public/logos/*.png
-src/public/logos/*.jpg
-src/public/logos/*.jpeg
-!src/public/logos/null_female.png
+public/uploads/schedule/*.xlsx
+public/logos/*.png
+public/logos/*.jpg
+public/logos/*.jpeg
+!public/logos/null_female.png

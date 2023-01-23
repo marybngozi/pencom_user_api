@@ -849,7 +849,7 @@ const downloadProcessedItems = async (req, res, next) => {
 
     const fileName = `${Date.now()}-processed_schedule.xlsx`;
     const filePath = path.join(
-      __basedir + "/public/uploads/schedule",
+      __basedir + "../public/uploads/schedule",
       fileName
     );
     await createExcel(excelData, filePath);
@@ -917,7 +917,7 @@ const downloadUploadedItems = async (req, res, next) => {
 
     const fileName = `${Date.now()}-uploaded_schedule.xlsx`;
     const filePath = path.join(
-      __basedir + "/public/uploads/schedule",
+      __basedir + "../public/uploads/schedule",
       fileName
     );
     await createExcel(uploadItems, filePath);

@@ -4,7 +4,7 @@ const express = require("express");
 // const moment = require("moment");
 const cors = require("cors");
 // const fs = require("fs");
-// const path = require("path");
+const path = require("path");
 
 const config = require("./config");
 const initDB = require("./db");
@@ -32,7 +32,7 @@ initDB();
 app.use(morganMiddleware);
 
 //use public folder for assets and uploads etc.
-app.use(express.static(__dirname + "/public"));
+app.use(express.static(path.join(__dirname, "../public")));
 
 // api routes
 app.use("/pencom", routes);

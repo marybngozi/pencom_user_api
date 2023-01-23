@@ -10,9 +10,10 @@ User API for Pencom withholding application. Module for Pencom user, for setup a
 
 ## Directory
 
-- `src/public` is where the public access lies
+- `/public` is where the public access lies
   The `schedule_sample` holds the sample for the schedule uploads
   The `uploads` holds the contents of the uploads for the schedules
+  The `logos` holds the contents of the logos or images of the account users
 
 ## Code fixes
 

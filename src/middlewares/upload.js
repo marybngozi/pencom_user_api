@@ -17,7 +17,7 @@ const excelFilter = (req, file, cb) => {
 
 const uploadStorageExcel = multer.diskStorage({
   destination: (req, file, cb) => {
-    cb(null, __basedir + "/public/uploads/schedule");
+    cb(null, path.join(__basedir, "../public/uploads/schedule"));
   },
   filename: (req, file, cb) => {
     logger.info("Multer excel storage middleware", file.originalname);
@@ -50,7 +50,7 @@ const imageFilter = (req, file, cb) => {
 
 const uploadStorageImage = multer.diskStorage({
   destination: (req, file, cb) => {
-    cb(null, __basedir + "/public/logos");
+    cb(null, path.join(__basedir, "../public/logos"));
   },
   filename: (req, file, cb) => {
     logger.info("Multer image storage middleware", file.originalname);
