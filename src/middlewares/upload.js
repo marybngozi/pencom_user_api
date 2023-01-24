@@ -53,8 +53,13 @@ const uploadStorageImage = multer.diskStorage({
     cb(null, path.join(__basedir, "../public/logos"));
   },
   filename: (req, file, cb) => {
-    logger.info("Multer image storage middleware", file.originalname);
-    cb(null, `${Date.now()}-${file.originalname}`);
+    const fileExtn = path.extname(file.originalname).toLowerCase();
+
+    let fileName = req.user.id.toString();
+    fileName = `${Date.now()}-${fileName.slice(14, 24)}${fileExtn}`;
+
+    logger.info("Multer image storage middleware", fileName);
+    cb(null, fileName);
   },
 });
 
