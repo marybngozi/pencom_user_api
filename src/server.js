@@ -32,7 +32,7 @@ initDB();
 app.use(morganMiddleware);
 
 //use public folder for assets and uploads etc.
-app.use(express.static(path.join(__dirname, "../public")));
+app.use("/pencom/public", express.static(path.join(__dirname, "../public")));
 
 // api routes
 app.use("/pencom", routes);
